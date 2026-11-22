@@ -12,12 +12,14 @@
 :root{
   --bg:#f6f2ea;--card:#fffdf8;--ink:#1d2421;--mute:#626c66;--line:#e4ddd0;
   --acc:#1f6f5c;--acc-ink:#fff;--acc-soft:#dcebe5;--bad:#a8432a;--bad-soft:#f6e1da;--ok-soft:#dcebe5;
+  --star:#b98014;
   --shadow:0 1px 2px rgba(0,0,0,.05),0 8px 24px rgba(40,50,45,.07);
 }
 @media (prefers-color-scheme:dark){
   :root:not([data-theme="light"]){
     --bg:#121819;--card:#1b2325;--ink:#e8ece9;--mute:#8e9a95;--line:#2a3437;
     --acc:#4fb596;--acc-ink:#0d1f1a;--acc-soft:#1f3a33;--bad:#e0846a;--bad-soft:#3a2520;--ok-soft:#1f3a33;
+    --star:#e7bd57;
     --shadow:0 1px 2px rgba(0,0,0,.3),0 8px 24px rgba(0,0,0,.25);
   }
 }
@@ -39,6 +41,11 @@ button{cursor:pointer;border:0;background:none}
 .btn.soft{background:var(--acc-soft);color:var(--acc)}
 .btn:active{transform:scale(.98)}
 .panel{background:var(--card);border:1px solid var(--line);border-radius:18px;padding:16px;box-shadow:var(--shadow);margin:12px 0}
+.res-good{background:var(--acc-soft);border-color:var(--acc)}
+.res-bad{background:var(--bad-soft);border-color:var(--bad)}
+.resline{font-weight:800;font-size:1.15rem}
+.res-good .resline{color:var(--acc)}
+.res-bad .resline{color:var(--bad)}
 .stats{display:flex;gap:10px;margin:12px 0}
 .stat{flex:1;background:var(--card);border:1px solid var(--line);border-radius:16px;padding:12px 14px}
 .stat b{display:block;font-size:1.6rem;line-height:1.2}
@@ -53,7 +60,7 @@ button{cursor:pointer;border:0;background:none}
 .fchip.on small{color:var(--acc-ink);opacity:.8}
 .fchip:disabled{opacity:.4;cursor:default}
 .card{background:var(--card);border:1px solid var(--line);border-radius:24px;box-shadow:var(--shadow);min-height:320px;padding:28px 22px;
-  display:flex;flex-direction:column;justify-content:center;align-items:center;text-align:center;gap:10px;margin:14px 0;cursor:pointer}
+  display:flex;flex-direction:column;justify-content:center;align-items:center;text-align:center;gap:10px;margin:14px 0;cursor:pointer;position:relative}
 .card .word{font-size:2.4rem;font-weight:700;line-height:1.2;letter-spacing:-.01em;direction:ltr;cursor:pointer}
 .card .ipa{color:var(--mute);direction:ltr;font-size:1rem}
 .card .fa-big{font-size:1.9rem;font-weight:700;line-height:1.5}
@@ -64,7 +71,25 @@ button{cursor:pointer;border:0;background:none}
 .card .ex{direction:ltr;font-style:italic;margin-top:6px}
 .card .exfa{color:var(--mute);font-size:.95rem}
 .card .rel{color:var(--mute);font-size:.82rem;direction:ltr}
+.card input#ans{width:100%;max-width:300px;min-height:52px;font-size:1.25rem;text-align:center;border-radius:14px;
+  border:1.5px solid var(--line);background:var(--bg);padding:8px 14px}
+.starbtn{position:absolute;top:10px;inset-inline-start:10px;width:42px;height:42px;border-radius:50%;font-size:1.45rem;
+  color:var(--mute);display:inline-flex;align-items:center;justify-content:center;line-height:1}
+.starbtn.on{color:var(--star)}
+.starbtn.inline{position:static;width:34px;height:34px;font-size:1.15rem;flex:none}
+.speakbar{display:flex;gap:6px;align-items:center;justify-content:center;flex-wrap:wrap}
+.rchip{display:inline-flex;align-items:center;justify-content:center;min-height:34px;padding:2px 10px;border-radius:99px;
+  border:1px solid var(--line);background:var(--card);font-size:.78rem;font-weight:600;color:var(--ink)}
+.rchip.on{background:var(--acc);border-color:var(--acc);color:var(--acc-ink)}
+.rchip.mini{min-height:32px;padding:1px 9px;font-size:.74rem}
 .icon-btn{width:44px;height:44px;border-radius:50%;background:var(--acc-soft);color:var(--acc);font-size:1.2rem;display:inline-flex;align-items:center;justify-content:center}
+.icon-btn.mini{width:34px;height:34px;font-size:1rem;flex:none}
+.diff{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:10px 14px;margin-top:8px;direction:ltr;text-align:left}
+.difflabel{font-size:.75rem;color:var(--mute);margin-top:6px}
+.diffrow{font-size:1.2rem;font-family:ui-monospace,Menlo,Consolas,monospace;letter-spacing:.12em;line-height:1.7}
+.d-ok{color:var(--acc)}
+.d-bad{color:var(--bad);text-decoration:line-through}
+.d-miss{color:var(--acc);font-weight:700;text-decoration:underline}
 .grades{display:grid;grid-template-columns:repeat(3,1fr);gap:10px}
 .grades button{min-height:64px;border-radius:16px;font-weight:700;display:flex;flex-direction:column;align-items:center;justify-content:center;line-height:1.3}
 .grades small{font-weight:400;opacity:.8;font-size:.76rem}
@@ -73,7 +98,7 @@ button{cursor:pointer;border:0;background:none}
 .g-easy{background:var(--acc-soft);color:var(--acc)}
 .progress{height:6px;border-radius:9px;background:var(--line);overflow:hidden;margin:6px 0}
 .progress i{display:block;height:100%;background:var(--acc);transition:width .25s}
-.row{display:flex;align-items:center;gap:12px;padding:12px 4px;border-bottom:1px solid var(--line);cursor:pointer}
+.row{display:flex;align-items:center;gap:10px;padding:12px 4px;border-bottom:1px solid var(--line);cursor:pointer}
 .row:last-child{border-bottom:0}
 .row .w{font-weight:700;direction:ltr;min-width:96px;text-align:left}
 .row .m{flex:1;color:var(--mute);font-size:.92rem;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
@@ -84,8 +109,8 @@ textarea{min-height:120px;direction:ltr;font-family:ui-monospace,Menlo,Consolas,
 label.f{display:block;font-size:.85rem;color:var(--mute);margin:10px 0 4px}
 .two{display:grid;grid-template-columns:1fr 1fr;gap:10px}
 nav{position:fixed;inset:auto 0 0 0;background:var(--card);border-top:1px solid var(--line);padding-bottom:env(safe-area-inset-bottom);z-index:5}
-nav .in{max-width:640px;margin:0 auto;display:grid;grid-template-columns:repeat(4,1fr)}
-nav button{padding:10px 0 8px;display:flex;flex-direction:column;align-items:center;gap:2px;color:var(--mute);font-size:.76rem;min-height:62px}
+nav .in{max-width:640px;margin:0 auto;display:grid;grid-template-columns:repeat(5,1fr)}
+nav button{padding:10px 0 8px;display:flex;flex-direction:column;align-items:center;gap:2px;color:var(--mute);font-size:.74rem;min-height:62px}
 nav button span{font-size:1.25rem;line-height:1}
 nav button.on{color:var(--acc);font-weight:700}
 .sheet-bg{position:fixed;inset:0;background:rgba(0,0,0,.45);z-index:10;display:flex;align-items:flex-end;justify-content:center}
@@ -156,24 +181,30 @@ async function grade(w, g){
 }
 
 /* ---------- تلفظ ---------- */
-let rate = 1;   // سرعت پخش تلفظ — در تب «تست» قابل تغییر است و ذخیره می‌شود
+let rate = 1;   // سرعت پیش‌فرض پخش — در تب «تست» قابل تغییر است
 try { rate = parseFloat(localStorage.getItem("vocab-rate")) || 1; } catch (e) {}
 function setRate(r){ rate = r; try { localStorage.setItem("vocab-rate", String(r)); } catch (e) {} }
-function speak(text){
+function speak(text, w){
   if (!("speechSynthesis" in window)) return toast("این مرورگر تلفظ را پشتیبانی نمی‌کند");
   const synth = window.speechSynthesis; synth.cancel();
-  const u = new SpeechSynthesisUtterance(text); u.lang = "en-US"; u.rate = rate;
+  const u = new SpeechSynthesisUtterance(text); u.lang = "en-US";
+  u.rate = w && Number.isFinite(w.rate) ? w.rate : rate;   // سرعت مخصوص همین لغت، وگرنه پیش‌فرض
   const v = synth.getVoices().find(v => v.lang.replace("_","-").toLowerCase() === "en-us") || synth.getVoices().find(v => v.lang.toLowerCase().startsWith("en"));
   if (v) u.voice = v; else if (synth.getVoices().length) toast("صدای انگلیسی روی این دستگاه نصب نیست");
   synth.speak(u);
 }
 
 /* ---------- نمایش کارت ---------- */
-const spk = t => `<button class="icon-btn" data-act="speak" data-text="${esc(t)}" aria-label="تلفظ">🔊</button>`;
+const RATES = [[1,"۱۰۰٪"],[.75,"۷۵٪"],[.5,"۵۰٪"],[.25,"۲۵٪"]];
+const effRate = w => (w && Number.isFinite(w.rate)) ? w.rate : rate;
+const spk = (w, mini) => `<button class="icon-btn${mini ? " mini" : ""}" data-act="speak" data-text="${esc(w.word)}" data-id="${esc(w.id)}" aria-label="تلفظ">🔊</button>`;
+const speakBar = w => `<div class="speakbar">${spk(w)}${RATES.map(([r,l]) =>
+  `<button class="rchip${effRate(w)===r ? " on" : ""}" data-act="wspeed" data-r="${r}" data-id="${esc(w.id)}" aria-label="پخش با سرعت ${l}">${l}</button>`).join("")}</div>`;
+const starBtn = (w, inline) => `<button class="starbtn${inline ? " inline" : ""}${w.star ? " on" : ""}" data-act="star" data-id="${esc(w.id)}" aria-label="ستاره">${w.star ? "★" : "☆"}</button>`;
 function frontHTML(w, dir){
   if (dir === "fa") return `<div class="fa-big" dir="rtl">${esc(w.fa)}</div>`;
-  return `<div class="word" data-act="speak" data-text="${esc(w.word)}">${esc(w.word)}</div>
-          <div class="ipa">${esc(w.ipa)}${w.pos ? " · " + esc(w.pos) : ""}</div>${spk(w.word)}`;
+  return `<div class="word" data-act="speak" data-text="${esc(w.word)}" data-id="${esc(w.id)}">${esc(w.word)}</div>
+          <div class="ipa">${esc(w.ipa)}${w.pos ? " · " + esc(w.pos) : ""}</div>${speakBar(w)}`;
 }
 function detailsHTML(w){
   return `${w.en ? `<div class="en">${esc(w.en)}</div>` : ""}
@@ -182,23 +213,24 @@ function detailsHTML(w){
     ${w.related ? `<div class="rel">${esc(w.related)}</div>` : ""}`;
 }
 function backHTML(w, dir){
-  if (dir === "fa") return `<div class="word" data-act="speak" data-text="${esc(w.word)}">${esc(w.word)}</div>
-      <div class="ipa">${esc(w.ipa)}${w.pos ? " · " + esc(w.pos) : ""}</div>${spk(w.word)}<hr>${detailsHTML(w)}`;
+  if (dir === "fa") return `<div class="word" data-act="speak" data-text="${esc(w.word)}" data-id="${esc(w.id)}">${esc(w.word)}</div>
+      <div class="ipa">${esc(w.ipa)}${w.pos ? " · " + esc(w.pos) : ""}</div>${speakBar(w)}<hr>${detailsHTML(w)}`;
   return `<div class="fa">${esc(w.fa)}</div><hr>${detailsHTML(w)}`;
 }
 function fullCardHTML(w){
-  return `<div class="card" data-nofocus>
-    <div class="word" data-act="speak" data-text="${esc(w.word)}">${esc(w.word)}</div>
-    <div class="ipa">${esc(w.ipa)}${w.pos ? " · " + esc(w.pos) : ""}</div>${spk(w.word)}
+  return `<div class="card" data-nofocus>${starBtn(w)}
+    <div class="word" data-act="speak" data-text="${esc(w.word)}" data-id="${esc(w.id)}">${esc(w.word)}</div>
+    <div class="ipa">${esc(w.ipa)}${w.pos ? " · " + esc(w.pos) : ""}</div>${speakBar(w)}
     <div class="fa">${esc(w.fa)}</div><hr>${detailsHTML(w)}</div>`;
 }
 
 /* ---------- وضعیت صفحه ---------- */
 let tab = "today";
 let session = null;               // مرور امروز
-let test = {stage: "all", tag: "all", dir: "en", mode: "shuffle", list: null, i: 0, shown: false};
+let test = {stage: "all", tag: "all", star: "all", dir: "en", mode: "shuffle", list: null, i: 0, shown: false};
+let typer = {stage: "all", tag: "all", star: "all", mode: "shuffle", list: null, i: 0, state: "ask", typed: "", ok: false};
 
-const TABS = [["today","📅","امروز"],["all","📚","همه لغت‌ها"],["test","🎯","تست"],["data","💾","داده‌ها"]];
+const TABS = [["today","📅","امروز"],["all","📚","لغت‌ها"],["type","⌨","تایپ"],["test","🎯","تست"],["data","💾","داده‌ها"]];
 function renderNav(){
   $("#nav").innerHTML = TABS.map(([k,ic,l]) => `<button data-act="tab" data-tab="${k}" class="${tab===k?"on":""}"><span>${ic}</span>${l}</button>`).join("");
 }
@@ -206,10 +238,37 @@ function render(){
   renderNav();
   const dueN = dueList().length;
   $("#sub").textContent = live().length ? `${live().length} لغت · ${dueN} برای امروز` : "";
-  $("#view").innerHTML = ({today: viewToday, all: viewAll, test: viewTest, data: viewData})[tab]();
+  $("#view").innerHTML = ({today: viewToday, all: viewAll, type: viewType, test: viewTest, data: viewData})[tab]();
   if (tab === "all") renderList();
   if (tab === "data") renderPersist();
+  if (tab === "type" && typer.list && typer.state === "ask") {
+    const el = $("#ans"); if (el) { el.value = typer.typed; setTimeout(() => el.focus(), 30); }
+  }
   window.scrollTo(0, 0);
+}
+
+/* --- چیپ‌های فیلتر مشترک بین تست و تایپ --- */
+function filterChips(st, P){
+  const t0 = today(), all = live();
+  const counts = STAGES.map(() => 0); all.forEach(w => counts[w.stage]++);
+  const dueN = all.filter(w => w.due <= t0).length;
+  const starN = all.filter(w => w.star).length;
+  const chip = (on, act, val, label, n, dis) =>
+    `<button class="fchip${on ? " on" : ""}" data-act="${act}" data-val="${esc(val)}"${dis ? " disabled" : ""}>${label}${n != null ? `<small>${n}</small>` : ""}</button>`;
+  const stageChips = [chip(st.stage==="all", P+"stage", "all", "همه", all.length),
+      chip(st.stage==="due", P+"stage", "due", "سررسیدشده", dueN, !dueN),
+      ...STAGES.map((d,i) => chip(st.stage===String(i), P+"stage", String(i), stageLabel(i), counts[i], !counts[i]))].join("");
+  const starChips = chip(st.star==="all", P+"star", "all", "همه", all.length) +
+      chip(st.star==="star", P+"star", "star", "★ ستاره‌دار", starN, !starN);
+  const tagCounts = {};
+  all.forEach(w => String(w.tags||"").split(/[\s,،]+/).filter(Boolean).forEach(tg => tagCounts[tg] = (tagCounts[tg]||0)+1));
+  const tagList = Object.keys(tagCounts).sort().slice(0, 12);
+  const tagChips = tagList.map(tg => chip(st.tag===tg, P+"tag", tg, tg, tagCounts[tg])).join("");
+  const pool = all.filter(w =>
+    (st.stage==="all" || (st.stage==="due" ? w.due<=t0 : w.stage===Number(st.stage))) &&
+    (st.star==="all" || !!w.star) &&
+    (st.tag==="all" || String(w.tags||"").split(/[\s,،]+/).includes(st.tag)));
+  return {stageChips, starChips, tagChips, pool, hasTags: tagList.length > 0, chip};
 }
 
 /* --- امروز --- */
@@ -239,7 +298,7 @@ function viewSession(){
   const nextGood = STAGES[Math.min(w.stage+1, STAGES.length-1)], nextEasy = STAGES[Math.min(w.stage+2, STAGES.length-1)];
   return `<div class="muted" style="display:flex;justify-content:space-between"><span>${s.done} از ${s.total}</span><span>${stageLabel(w.stage)}</span></div>
     <div class="progress"><i style="width:${pct}%"></i></div>
-    <div class="card" data-act="flip">${frontHTML(w,"en")}${s.revealed ? `<hr>${backHTML(w,"en")}` : `<div class="hint">برای دیدن معنی بزن</div>`}</div>
+    <div class="card" data-act="flip">${starBtn(w)}${frontHTML(w,"en")}${s.revealed ? `<hr>${backHTML(w,"en")}` : `<div class="hint">برای دیدن معنی بزن</div>`}</div>
     ${s.revealed
       ? `<div class="grades">
           <button class="g-again" data-act="grade" data-g="again">بلد نبودم<small>دوباره امروز</small></button>
@@ -261,6 +320,9 @@ function renderList(){
                       .sort((a,b) => a.word.localeCompare(b.word));
   $("#list").innerHTML = items.length ? items.map(w => `<div class="row" data-act="open" data-id="${esc(w.id)}">
       <span class="w">${esc(w.word)}</span><span class="m">${esc(w.fa)}</span>
+      ${spk(w, true)}
+      <button class="rchip mini" data-act="wspeed" data-id="${esc(w.id)}" aria-label="تغییر سرعت و پخش">${RATES.find(r => r[0] === effRate(w))[1]}</button>
+      ${starBtn(w, true)}
       <span class="badge ${w.due <= t ? "due" : ""}">${stageLabel(w.stage)}</span></div>`).join("")
     : `<div class="empty" style="padding:20px">چیزی پیدا نشد</div>`;
 }
@@ -274,6 +336,67 @@ function openWord(id){
     <p style="margin-top:10px"><button class="btn ghost" data-act="close">بستن</button></p></div></div>`;
 }
 
+/* --- تایپ (معکوس؛ با اثر روی زمان‌بندی مثل کارت اصلی) --- */
+function viewType(){
+  if (!live().length) return `<div class="empty"><div class="big">⌨</div><p>اول لغت وارد کن.</p></div>`;
+  if (typer.list) {
+    const w = words.get(typer.list[typer.i]);
+    if (typer.state === "ask") return `<div class="muted" style="display:flex;justify-content:space-between"><span>${typer.i+1} از ${typer.list.length}</span><span>تایپ · روی زمان‌بندی اثر دارد</span></div>
+      <div class="progress"><i style="width:${Math.round(100*(typer.i+1)/typer.list.length)}%"></i></div>
+      <div class="card" data-nofocus>${starBtn(w)}
+        <div class="fa-big" dir="rtl">${esc(w.fa)}</div>
+        <input type="text" id="ans" dir="ltr" autocomplete="off" autocapitalize="off" autocorrect="off" spellcheck="false" placeholder="انگلیسی‌اش را بنویس…" aria-label="پاسخ انگلیسی">
+        <button class="btn" data-act="tycheck">بررسی</button>
+        <div class="hint">Enter = بررسی</div></div>
+      <p style="text-align:center"><button class="btn ghost small" data-act="tyend">خروج از تایپ</button></p>`;
+    const moved = typer.ok
+      ? `مرحله‌ی بعد: ${stageLabel(w.stage)} · مرور ${whenText(daysBetween(today(), w.due))}`
+      : `برگشت به ${stageLabel(w.stage)} · همان امروز دوباره`;
+    return `<div class="muted" style="display:flex;justify-content:space-between"><span>${typer.i+1} از ${typer.list.length}</span><span>نتیجه</span></div>
+      <div class="progress"><i style="width:${Math.round(100*(typer.i+1)/typer.list.length)}%"></i></div>
+      <div class="panel ${typer.ok ? "res-good" : "res-bad"}" style="text-align:center">
+        <div class="resline">${typer.ok ? "درست بود" : "غلط بود"}</div>
+        ${typer.ok ? "" : diffBlock(typer.typed, w.word)}
+        <p class="muted" style="margin:4px 0">${moved}</p></div>
+      <div class="card" data-nofocus>${starBtn(w)}
+        <div class="word">${esc(w.word)}</div>
+        <div class="ipa">${esc(w.ipa)}${w.pos ? " · " + esc(w.pos) : ""}</div>
+        ${speakBar(w)}<hr>${detailsHTML(w)}</div>
+      <button class="btn" data-act="tynext">لغت بعدی</button>
+      <p style="text-align:center"><button class="btn ghost small" data-act="tyend">خروج از تایپ</button></p>`;
+  }
+  const F = filterChips(typer, "y");
+  return `<div class="panel"><p class="muted" style="margin-top:0">معنی فارسی را می‌بینی و انگلیسی‌اش را تایپ می‌کنی. درست = یک مرحله جلوتر (مثل «بلد بودم»)؛ غلط = برگشت به روز 0 و تکرار در همین جلسه، مثل «بلد نبودم».</p>
+    <label class="f">کدام لغت‌ها؟ (بر اساس مرحله)</label>
+    <div class="fchips">${F.stageChips}</div>
+    <label class="f">ستاره‌ها</label>
+    <div class="fchips">${F.starChips}</div>
+    ${F.hasTags ? `<label class="f">برچسب</label><div class="fchips">${F.chip(typer.tag==="all","ytag","all","همه",live().length)}${F.tagChips}</div>` : ""}
+    <label class="f">ترتیب</label>
+    <select id="y-mode"><option value="shuffle" ${typer.mode==="shuffle"?"selected":""}>تصادفی</option><option value="alpha" ${typer.mode==="alpha"?"selected":""}>الفبایی</option></select>
+    <p><button class="btn" data-act="ystart">شروع تایپ (${F.pool.length} لغت)</button></p></div>`;
+}
+// دیف حرف‌به‌حرف بین جواب تایپی و املای درست (بر پایه‌ی طولانی‌ترین زیررشته‌ی مشترک)
+function diffBlock(typed, target){
+  const norm = s => s.trim().toLowerCase().replace(/\s+/g, " ");
+  const a = norm(typed), b = norm(target);
+  const m = a.length, n = b.length;
+  const dp = Array.from({length: m+1}, () => new Array(n+1).fill(0));
+  for (let i=m-1;i>=0;i--) for (let j=n-1;j>=0;j--)
+    dp[i][j] = a[i]===b[j] ? dp[i+1][j+1]+1 : Math.max(dp[i+1][j], dp[i][j+1]);
+  let i = 0, j = 0; const T = [], G = [];
+  while (i < m && j < n){
+    if (a[i]===b[j]) { T.push(["ok",a[i]]); G.push(["ok",b[j]]); i++; j++; }
+    else if (dp[i+1][j] >= dp[i][j+1]) { T.push(["bad",a[i]]); i++; }
+    else { G.push(["miss",b[j]]); j++; }
+  }
+  while (i < m){ T.push(["bad",a[i]]); i++; }
+  while (j < n){ G.push(["miss",b[j]]); j++; }
+  const render = ms => ms.map(([s,c]) => `<span class="d-${s}">${esc(c)}</span>`).join("");
+  return `<div class="diff"><div class="difflabel" style="margin-top:0">نوشته‌ی تو:</div><div class="diffrow">${render(T)}</div>
+    <div class="difflabel">املای درست:</div><div class="diffrow">${render(G)}</div></div>`;
+}
+
 /* --- تست (بدون تأثیر روی زمان‌بندی) --- */
 function viewTest(){
   if (!live().length) return `<div class="empty"><div class="big">🎯</div><p>اول لغت وارد کن.</p></div>`;
@@ -281,36 +404,24 @@ function viewTest(){
     const w = words.get(test.list[test.i]);
     return `<div class="muted" style="display:flex;justify-content:space-between"><span>${test.i+1} از ${test.list.length}</span><span>حالت تست · روی زمان‌بندی اثر ندارد</span></div>
       <div class="progress"><i style="width:${Math.round(100*(test.i+1)/test.list.length)}%"></i></div>
-      <div class="card" data-act="tflip">${frontHTML(w,test.dir)}${test.shown ? `<hr>${backHTML(w,test.dir)}` : `<div class="hint">برای دیدن پشت کارت بزن</div>`}</div>
+      <div class="card" data-act="tflip">${starBtn(w)}${frontHTML(w,test.dir)}${test.shown ? `<hr>${backHTML(w,test.dir)}` : `<div class="hint">برای دیدن پشت کارت بزن</div>`}</div>
       <div class="two"><button class="btn ghost" data-act="tprev">قبلی</button><button class="btn" data-act="tnext">بعدی</button></div>
       <p style="text-align:center"><button class="btn ghost small" data-act="tend">خروج از تست</button></p>`;
   }
-  const t0 = today(), all = live();
-  const counts = STAGES.map(() => 0); all.forEach(w => counts[w.stage]++);
-  const dueN = all.filter(w => w.due <= t0).length;
-  const chip = (on, act, val, label, n, dis) =>
-    `<button class="fchip${on ? " on" : ""}" data-act="${act}" data-val="${esc(val)}"${dis ? " disabled" : ""}>${label}${n != null ? `<small>${n}</small>` : ""}</button>`;
-  const stageChips = [chip(test.stage==="all", "tstage", "all", "همه", all.length),
-      chip(test.stage==="due", "tstage", "due", "سررسیدشده", dueN, !dueN),
-      ...STAGES.map((d,i) => chip(test.stage===String(i), "tstage", String(i), stageLabel(i), counts[i], !counts[i]))].join("");
-  const tagCounts = {};
-  all.forEach(w => String(w.tags||"").split(/[\s,،]+/).filter(Boolean).forEach(tg => tagCounts[tg] = (tagCounts[tg]||0)+1));
-  const tagList = Object.keys(tagCounts).sort().slice(0, 12);
-  const tagChips = tagList.map(tg => chip(test.tag===tg, "ttag", tg, tg, tagCounts[tg])).join("");
-  const pool = all.filter(w =>
-    (test.stage==="all" || (test.stage==="due" ? w.due<=t0 : w.stage===Number(test.stage))) &&
-    (test.tag==="all" || String(w.tags||"").split(/[\s,،]+/).includes(test.tag)));
-  const rateChips = [[1,"۱۰۰٪"],[.75,"۷۵٪"],[.5,"۵۰٪"],[.25,"۲۵٪"]]
-    .map(([r,l]) => `<button class="fchip${rate===r ? " on" : ""}" data-act="rate" data-r="${r}">${l}</button>`).join("");
+  const F = filterChips(test, "t");
+  const rateChips = RATES.map(([r,l]) =>
+    `<button class="fchip${rate===r ? " on" : ""}" data-act="rate" data-r="${r}">${l}</button>`).join("");
   return `<div class="panel"><p class="muted" style="margin-top:0">اینجا می‌توانی هر لغتی را هر چند بار که خواستی مرور کنی، بدون این‌که زمان‌بندی تغییر کند.</p>
     <label class="f">کدام لغت‌ها؟ (بر اساس مرحله)</label>
-    <div class="fchips">${stageChips}</div>
-    ${tagList.length ? `<label class="f">برچسب</label><div class="fchips">${chip(test.tag==="all","ttag","all","همه",all.length)}${tagChips}</div>` : ""}
+    <div class="fchips">${F.stageChips}</div>
+    <label class="f">ستاره‌ها</label>
+    <div class="fchips">${F.starChips}</div>
+    ${F.hasTags ? `<label class="f">برچسب</label><div class="fchips">${F.chip(test.tag==="all","ttag","all","همه",live().length)}${F.tagChips}</div>` : ""}
     <div class="two"><div><label class="f">جهت</label><select id="t-dir"><option value="en" ${test.dir==="en"?"selected":""}>انگلیسی ← فارسی</option><option value="fa" ${test.dir==="fa"?"selected":""}>فارسی ← انگلیسی</option></select></div>
     <div><label class="f">ترتیب</label><select id="t-mode"><option value="shuffle" ${test.mode==="shuffle"?"selected":""}>تصادفی</option><option value="alpha" ${test.mode==="alpha"?"selected":""}>الفبایی</option></select></div></div>
-    <label class="f">سرعت تلفظ</label>
+    <label class="f">سرعت پیش‌فرض تلفظ</label>
     <div class="fchips">${rateChips}</div>
-    <p><button class="btn" data-act="tstart">شروع تست (${pool.length} لغت)</button></p></div>`;
+    <p><button class="btn" data-act="tstart">شروع تست (${F.pool.length} لغت)</button></p></div>`;
 }
 
 /* --- داده‌ها --- */
@@ -334,7 +445,7 @@ function viewData(){
   "tags": "personality"
 }]}</pre><p class="muted">فقط «word» اجباری است.</p></details></div>
   <div class="panel"><h2 style="margin-top:0">پشتیبان و انتقال</h2>
-    <p class="muted" style="margin-top:0">پشتیبان کامل شامل مرحله و زمان مرور هر لغت است. آن را برای خودت در تلگرام بفرست و در دستگاه دیگر وارد کن؛ نسخه‌ی جدیدتر هر لغت برنده می‌شود.</p>
+    <p class="muted" style="margin-top:0">پشتیبان کامل شامل مرحله، زمان مرور، ستاره و سرعت صدا هر لغت است. آن را برای خودت در تلگرام بفرست و در دستگاه دیگر وارد کن؛ نسخه‌ی جدیدتر هر لغت برنده می‌شود.</p>
     <button class="btn" data-act="exportjson">گرفتن پشتیبان (JSON)</button>
     <p><button class="btn ghost" data-act="exportanki">خروجی برای Anki (TSV)</button></p>
     <p class="muted" id="persist"></p></div>`;
@@ -355,7 +466,7 @@ const KNOWN = new Set(["id","word","ipa","pos","fa","en","example","exampleFa","
 function normalize(x){
   const word = String(x.word || "").trim(); if (!word) return null;
   const g = k => String(x[k] ?? "").trim();
-  const extra = {};   // فیلدهای ناشناخته (مثلاً lapses در نسخه‌های بعدی) نگه داشته می‌شوند تا در پشتیبان‌گیری از بین نروند
+  const extra = {};   // فیلدهای ناشناخته (مثل star و rate و lapses) نگه داشته می‌شوند تا در پشتیبان‌گیری از بین نروند
   for (const k of Object.keys(x))
     if (!KNOWN.has(k) && !k.startsWith("__") && /^[A-Za-z_$][\w$]*$/.test(k) && x[k] != null) extra[k] = x[k];
   return {id: String(x.id || word.toLowerCase()), word, ipa: g("ipa"), pos: g("pos"), fa: g("fa"), en: g("en"),
@@ -374,11 +485,11 @@ async function importText(text){
       && raw.stage >= 0 && raw.stage < STAGES.length && dueOk;
     const old = words.get(n.id);
     if (!old || (old.deleted && !hasState)) {                      // لغت تازه → روز 0
-      await put({...n, stage: hasState ? Math.min(raw.stage, STAGES.length-1) : 0, due: hasState ? raw.due : today(),
+      await put({...old, ...n, stage: hasState ? Math.min(raw.stage, STAGES.length-1) : 0, due: hasState ? raw.due : today(),
                  updatedAt: hasState ? raw.updatedAt : Date.now(), deleted: hasState ? !!raw.deleted : false});
       added++;
-    } else if (hasState && raw.updatedAt > old.updatedAt) {        // ادغام: جدیدترین برنده است
-      await put({...n, stage: Math.min(raw.stage, STAGES.length-1), due: raw.due, updatedAt: raw.updatedAt, deleted: !!raw.deleted});
+    } else if (hasState && raw.updatedAt > old.updatedAt) {        // ادغام: جدیدترین برنده است؛ ستاره/سرعتِ قدیمی حفظ می‌شود
+      await put({...old, ...n, stage: Math.min(raw.stage, STAGES.length-1), due: raw.due, updatedAt: raw.updatedAt, deleted: !!raw.deleted});
       updated++;
     } else skipped++;
   }
@@ -405,12 +516,40 @@ function ankiTSV(){
 }
 
 /* ---------- رویدادها ---------- */
+async function checkTyping(){
+  const w = words.get(typer.list[typer.i]);
+  const v = $("#ans") ? $("#ans").value : typer.typed;
+  if (!v.trim()) return toast("چیزی ننوشتی");
+  const norm = s => s.trim().toLowerCase().replace(/\s+/g, " ");
+  typer.ok = norm(v) === norm(w.word); typer.typed = v;
+  await grade(w, typer.ok ? "good" : "again");                    // مثل کارت اصلی: درست=بلد بودم، غلط=بلد نبودم
+  if (!typer.ok) typer.list.push(w.id);                           // مثل «بلد نبودم» در مرور: آخر جلسه تکرار می‌شود
+  typer.state = "result"; render();
+}
+function advanceTyping(){
+  typer.i++; typer.state = "ask"; typer.typed = "";
+  if (typer.i >= typer.list.length) { typer.list = null; toast("تایپ تمام شد"); }
+  render();
+}
 document.addEventListener("click", async e => {
   const t = e.target.closest("[data-act]"); if (!t) return;
   if (t.dataset.act === "close" && e.target !== t && t.classList.contains("sheet-bg")) return; // کلیک داخل برگه
   const act = t.dataset.act;
   if (act === "tab") { tab = t.dataset.tab; render(); }
-  else if (act === "speak") { e.stopPropagation(); speak(t.dataset.text); }
+  else if (act === "speak") { e.stopPropagation(); speak(t.dataset.text, t.dataset.id ? words.get(t.dataset.id) : null); }
+  else if (act === "star") {
+    e.stopPropagation();
+    const w = words.get(t.dataset.id); w.star = !w.star; w.updatedAt = Date.now(); await put(w);
+    if (tab === "all") { if ($("#modal").innerHTML) openWord(w.id); renderList(); } else render();
+  }
+  else if (act === "wspeed") {
+    e.stopPropagation();
+    const w = words.get(t.dataset.id), r = parseFloat(t.dataset.r);
+    if (Number.isFinite(r)) w.rate = r;                            // چیپ سرعت داخل کارت
+    else w.rate = RATES[(RATES.findIndex(x => x[0] === effRate(w)) + 1) % RATES.length][0]; // چرخه در لیست
+    w.updatedAt = Date.now(); await put(w); speak(w.word, w);
+    if (tab === "all") renderList(); else render();
+  }
   else if (act === "start") { const q = dueList().map(w => w.id); session = {queue: q, total: q.length, done: 0, revealed: false}; render(); }
   else if (act === "flip") { session.revealed = true; render(); }
   else if (act === "grade") {
@@ -428,26 +567,47 @@ document.addEventListener("click", async e => {
   else if (act === "reset") { const w = words.get(t.dataset.id); w.stage = 0; w.due = today(); w.updatedAt = Date.now(); await put(w); $("#modal").innerHTML = ""; toast("به روز 0 برگشت"); render(); }
   else if (act === "tstage") { test.stage = t.dataset.val; render(); }
   else if (act === "ttag") { test.tag = t.dataset.val; render(); }
+  else if (act === "tstar") { test.star = t.dataset.val; render(); }
   else if (act === "rate") { setRate(parseFloat(t.dataset.r)); render(); }
   else if (act === "tstart") {
     test.dir = $("#t-dir").value; test.mode = $("#t-mode").value;
-    let L = live(); const t0 = today();
-    if (test.stage === "due") L = L.filter(w => w.due <= t0); else if (test.stage !== "all") L = L.filter(w => w.stage === Number(test.stage));
-    if (test.tag !== "all") L = L.filter(w => String(w.tags || "").split(/[\s,،]+/).includes(test.tag));
+    const L = filterChips(test, "t").pool;
     if (!L.length) return toast("لغتی با این فیلتر نیست");
-    L = test.mode === "shuffle" ? shuffle(L) : L.sort((a,b) => a.word.localeCompare(b.word));
-    test.list = L.map(w => w.id); test.i = 0; test.shown = false; render();
+    const S = test.mode === "shuffle" ? shuffle(L) : L.sort((a,b) => a.word.localeCompare(b.word));
+    test.list = S.map(w => w.id); test.i = 0; test.shown = false; render();
   }
   else if (act === "tflip") { test.shown = !test.shown; render(); }
   else if (act === "tnext") { test.i = (test.i + 1) % test.list.length; test.shown = false; render(); }
   else if (act === "tprev") { test.i = (test.i - 1 + test.list.length) % test.list.length; test.shown = false; render(); }
   else if (act === "tend") { test.list = null; render(); }
+  else if (act === "ystage") { typer.stage = t.dataset.val; render(); }
+  else if (act === "ytag") { typer.tag = t.dataset.val; render(); }
+  else if (act === "ystar") { typer.star = t.dataset.val; render(); }
+  else if (act === "ystart") {
+    typer.mode = $("#y-mode").value;
+    const L = filterChips(typer, "y").pool;
+    if (!L.length) return toast("لغتی با این فیلتر نیست");
+    const S = typer.mode === "shuffle" ? shuffle(L) : L.sort((a,b) => a.word.localeCompare(b.word));
+    typer.list = S.map(w => w.id); typer.i = 0; typer.state = "ask"; typer.typed = ""; render();
+  }
+  else if (act === "tycheck") { await checkTyping(); }
+  else if (act === "tynext") { advanceTyping(); }
+  else if (act === "tyend") { typer.list = null; render(); }
   else if (act === "pickfile") $("#file").click();
   else if (act === "importpaste") { const v = $("#paste").value.trim(); if (v) await importText(v); else toast("چیزی نچسبانده‌ای"); }
   else if (act === "exportjson") { await saveFile(`vocab-backup-${today()}.json`, JSON.stringify({app: "vocab", version: 1, exported: new Date().toISOString(), words: [...words.values()]}, null, 1), "text/plain"); }
   else if (act === "exportanki") { await saveFile(`vocab-anki-${today()}.txt`, ankiTSV(), "text/plain"); }
 });
-document.addEventListener("input", e => { if (e.target.id === "q") renderList(); });
+document.addEventListener("input", e => {
+  if (e.target.id === "q") renderList();
+  if (e.target.id === "ans") typer.typed = e.target.value;         // متن تایپی وسط کار نیمه‌کاره از دست نرود
+});
+document.addEventListener("keydown", e => {
+  if (e.key !== "Enter") return;
+  if (e.target && e.target.id === "ans") { e.preventDefault(); checkTyping(); }
+  else if (tab === "type" && typer.list && typer.state === "result"
+      && !(e.target.closest && e.target.closest("button,input,select,textarea,a"))) { e.preventDefault(); advanceTyping(); }
+});
 $("#file").addEventListener("change", async e => {
   const f = e.target.files[0]; if (!f) return;
   await importText(await f.text()); e.target.value = "";
