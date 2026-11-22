@@ -24,9 +24,10 @@
   }
 }
 *{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+html{font-size:calc(16px*var(--fscale,1))}
 html,body{margin:0;background:var(--bg);color:var(--ink)}
 body{font-family:"Vazirmatn","Vazir","Segoe UI",system-ui,-apple-system,"Noto Sans Arabic","Noto Naskh Arabic",Tahoma,sans-serif;
-  font-size:16px;line-height:1.7;min-height:100vh;padding-bottom:calc(84px + env(safe-area-inset-bottom))}
+  font-size:calc(16px*var(--fscale,1));line-height:1.7;min-height:100vh;padding-bottom:calc(84px + env(safe-area-inset-bottom))}
 .wrap{max-width:640px;margin:0 auto;padding:0 16px}
 header{padding:max(18px,env(safe-area-inset-top)) 0 6px;display:flex;align-items:baseline;justify-content:space-between}
 header h1{font-size:1.25rem;margin:0;font-weight:700;letter-spacing:-.01em}
@@ -78,10 +79,6 @@ button{cursor:pointer;border:0;background:none}
 .starbtn.on{color:var(--star)}
 .starbtn.inline{position:static;width:34px;height:34px;font-size:1.15rem;flex:none}
 .speakbar{display:flex;gap:6px;align-items:center;justify-content:center;flex-wrap:wrap}
-.rchip{display:inline-flex;align-items:center;justify-content:center;min-height:34px;padding:2px 10px;border-radius:99px;
-  border:1px solid var(--line);background:var(--card);font-size:.78rem;font-weight:600;color:var(--ink)}
-.rchip.on{background:var(--acc);border-color:var(--acc);color:var(--acc-ink)}
-.rchip.mini{min-height:32px;padding:1px 9px;font-size:.74rem}
 .icon-btn{width:44px;height:44px;border-radius:50%;background:var(--acc-soft);color:var(--acc);font-size:1.2rem;display:inline-flex;align-items:center;justify-content:center}
 .icon-btn.mini{width:34px;height:34px;font-size:1rem;flex:none}
 .diff{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:10px 14px;margin-top:8px;direction:ltr;text-align:left}
@@ -109,9 +106,10 @@ textarea{min-height:120px;direction:ltr;font-family:ui-monospace,Menlo,Consolas,
 label.f{display:block;font-size:.85rem;color:var(--mute);margin:10px 0 4px}
 .two{display:grid;grid-template-columns:1fr 1fr;gap:10px}
 nav{position:fixed;inset:auto 0 0 0;background:var(--card);border-top:1px solid var(--line);padding-bottom:env(safe-area-inset-bottom);z-index:5}
-nav .in{max-width:640px;margin:0 auto;display:grid;grid-template-columns:repeat(5,1fr)}
-nav button{padding:10px 0 8px;display:flex;flex-direction:column;align-items:center;gap:2px;color:var(--mute);font-size:.74rem;min-height:62px}
-nav button span{font-size:1.25rem;line-height:1}
+nav .in{max-width:640px;margin:0 auto;display:grid;grid-template-columns:repeat(6,1fr)}
+nav button{padding:10px 0 8px;display:flex;flex-direction:column;align-items:center;gap:2px;color:var(--mute);font-size:.68rem;min-height:60px;overflow:hidden}
+nav button span{font-size:1.15rem;line-height:1}
+@media (max-width:359px){nav button{font-size:.6rem}}
 nav button.on{color:var(--acc);font-weight:700}
 .sheet-bg{position:fixed;inset:0;background:rgba(0,0,0,.45);z-index:10;display:flex;align-items:flex-end;justify-content:center}
 .sheet{background:var(--bg);width:100%;max-width:640px;max-height:88vh;overflow:auto;border-radius:24px 24px 0 0;padding:16px 16px calc(20px + env(safe-area-inset-bottom))}
@@ -181,25 +179,34 @@ async function grade(w, g){
 }
 
 /* ---------- تلفظ ---------- */
-let rate = 1;   // سرعت پیش‌فرض پخش — در تب «تست» قابل تغییر است
+let rate = 1;   // سرعت پیش‌فرض پخش — فقط از تب «تنظیمات» تغییر می‌کند
 try { rate = parseFloat(localStorage.getItem("vocab-rate")) || 1; } catch (e) {}
 function setRate(r){ rate = r; try { localStorage.setItem("vocab-rate", String(r)); } catch (e) {} }
-function speak(text, w){
+/* اندازه‌ی فونت — فقط از تب «تنظیمات» */
+const FSSIZES = [[.9,"۹۰٪"],[1,"۱۰۰٪"],[1.15,"۱۱۵٪"],[1.3,"۱۳۰٪"]];
+let fscale = 1;
+try { fscale = parseFloat(localStorage.getItem("vocab-fs")) || 1; } catch (e) {}
+function applyFs(v){
+  if (!Number.isFinite(v)) return;
+  fscale = v;
+  document.documentElement.style.setProperty("--fscale", String(v));
+  try { localStorage.setItem("vocab-fs", String(v)); } catch (e) {}
+}
+applyFs(fscale);
+function speak(text){
   if (!("speechSynthesis" in window)) return toast("این مرورگر تلفظ را پشتیبانی نمی‌کند");
   const synth = window.speechSynthesis; synth.cancel();
   const u = new SpeechSynthesisUtterance(text); u.lang = "en-US";
-  u.rate = w && Number.isFinite(w.rate) ? w.rate : rate;   // سرعت مخصوص همین لغت، وگرنه پیش‌فرض
+  u.rate = rate;
   const v = synth.getVoices().find(v => v.lang.replace("_","-").toLowerCase() === "en-us") || synth.getVoices().find(v => v.lang.toLowerCase().startsWith("en"));
   if (v) u.voice = v; else if (synth.getVoices().length) toast("صدای انگلیسی روی این دستگاه نصب نیست");
   synth.speak(u);
 }
 
 /* ---------- نمایش کارت ---------- */
-const RATES = [[1,"۱۰۰٪"],[.75,"۷۵٪"],[.5,"۵۰٪"],[.25,"۲۵٪"]];
-const effRate = w => (w && Number.isFinite(w.rate)) ? w.rate : rate;
+const RATES = [[1,"۱۰۰٪"],[.75,"۷۵٪"],[.5,"۵۰٪"],[.25,"۲۵٪"]];   // چیپ‌های سرعت فقط در تب «تنظیمات»
 const spk = (w, mini) => `<button class="icon-btn${mini ? " mini" : ""}" data-act="speak" data-text="${esc(w.word)}" data-id="${esc(w.id)}" aria-label="تلفظ">🔊</button>`;
-const speakBar = w => `<div class="speakbar">${spk(w)}${RATES.map(([r,l]) =>
-  `<button class="rchip${effRate(w)===r ? " on" : ""}" data-act="wspeed" data-r="${r}" data-id="${esc(w.id)}" aria-label="پخش با سرعت ${l}">${l}</button>`).join("")}</div>`;
+const speakBar = w => `<div class="speakbar">${spk(w)}</div>`;
 const starBtn = (w, inline) => `<button class="starbtn${inline ? " inline" : ""}${w.star ? " on" : ""}" data-act="star" data-id="${esc(w.id)}" aria-label="ستاره">${w.star ? "★" : "☆"}</button>`;
 function frontHTML(w, dir){
   if (dir === "fa") return `<div class="fa-big" dir="rtl">${esc(w.fa)}</div>`;
@@ -230,7 +237,7 @@ let session = null;               // مرور امروز
 let test = {stage: "all", tag: "all", star: "all", dir: "en", mode: "shuffle", list: null, i: 0, shown: false};
 let typer = {stage: "all", tag: "all", star: "all", mode: "shuffle", list: null, i: 0, state: "ask", typed: "", ok: false};
 
-const TABS = [["today","📅","امروز"],["all","📚","لغت‌ها"],["type","⌨","تایپ"],["test","🎯","تست"],["data","💾","داده‌ها"]];
+const TABS = [["today","📅","امروز"],["all","📚","لغت‌ها"],["type","⌨","تایپ"],["test","🎯","تست"],["data","💾","داده‌ها"],["settings","⚙️","تنظیمات"]];
 function renderNav(){
   $("#nav").innerHTML = TABS.map(([k,ic,l]) => `<button data-act="tab" data-tab="${k}" class="${tab===k?"on":""}"><span>${ic}</span>${l}</button>`).join("");
 }
@@ -238,7 +245,7 @@ function render(){
   renderNav();
   const dueN = dueList().length;
   $("#sub").textContent = live().length ? `${live().length} لغت · ${dueN} برای امروز` : "";
-  $("#view").innerHTML = ({today: viewToday, all: viewAll, type: viewType, test: viewTest, data: viewData})[tab]();
+  $("#view").innerHTML = ({today: viewToday, all: viewAll, type: viewType, test: viewTest, data: viewData, settings: viewSettings})[tab]();
   if (tab === "all") renderList();
   if (tab === "data") renderPersist();
   if (tab === "type" && typer.list && typer.state === "ask") {
@@ -321,7 +328,6 @@ function renderList(){
   $("#list").innerHTML = items.length ? items.map(w => `<div class="row" data-act="open" data-id="${esc(w.id)}">
       <span class="w">${esc(w.word)}</span><span class="m">${esc(w.fa)}</span>
       ${spk(w, true)}
-      <button class="rchip mini" data-act="wspeed" data-id="${esc(w.id)}" aria-label="تغییر سرعت و پخش">${RATES.find(r => r[0] === effRate(w))[1]}</button>
       ${starBtn(w, true)}
       <span class="badge ${w.due <= t ? "due" : ""}">${stageLabel(w.stage)}</span></div>`).join("")
     : `<div class="empty" style="padding:20px">چیزی پیدا نشد</div>`;
@@ -409,8 +415,6 @@ function viewTest(){
       <p style="text-align:center"><button class="btn ghost small" data-act="tend">خروج از تست</button></p>`;
   }
   const F = filterChips(test, "t");
-  const rateChips = RATES.map(([r,l]) =>
-    `<button class="fchip${rate===r ? " on" : ""}" data-act="rate" data-r="${r}">${l}</button>`).join("");
   return `<div class="panel"><p class="muted" style="margin-top:0">اینجا می‌توانی هر لغتی را هر چند بار که خواستی مرور کنی، بدون این‌که زمان‌بندی تغییر کند.</p>
     <label class="f">کدام لغت‌ها؟ (بر اساس مرحله)</label>
     <div class="fchips">${F.stageChips}</div>
@@ -419,9 +423,22 @@ function viewTest(){
     ${F.hasTags ? `<label class="f">برچسب</label><div class="fchips">${F.chip(test.tag==="all","ttag","all","همه",live().length)}${F.tagChips}</div>` : ""}
     <div class="two"><div><label class="f">جهت</label><select id="t-dir"><option value="en" ${test.dir==="en"?"selected":""}>انگلیسی ← فارسی</option><option value="fa" ${test.dir==="fa"?"selected":""}>فارسی ← انگلیسی</option></select></div>
     <div><label class="f">ترتیب</label><select id="t-mode"><option value="shuffle" ${test.mode==="shuffle"?"selected":""}>تصادفی</option><option value="alpha" ${test.mode==="alpha"?"selected":""}>الفبایی</option></select></div></div>
-    <label class="f">سرعت پیش‌فرض تلفظ</label>
-    <div class="fchips">${rateChips}</div>
     <p><button class="btn" data-act="tstart">شروع تست (${F.pool.length} لغت)</button></p></div>`;
+}
+
+/* --- تنظیمات (پیش‌فرض‌های سراسری برنامه) --- */
+function viewSettings(){
+  const spd = RATES.map(([r,l]) =>
+    `<button class="fchip${rate===r ? " on" : ""}" data-act="rate" data-r="${r}" aria-label="سرعت ${l}">${l}</button>`).join("");
+  const fsz = FSSIZES.map(([v,l]) =>
+    `<button class="fchip${fscale===v ? " on" : ""}" data-act="fs" data-v="${v}">${l}</button>`).join("");
+  return `<div class="panel"><h2 style="margin-top:0">🔊 سرعت پخش صدا</h2>
+    <p class="muted" style="margin-top:0">سرعت پیش‌فرض تلفظ در همه‌ی بخش‌ها (مرور، لیست، تست، تایپ) فقط از همین‌جا تنظیم می‌شود. درصد کمتر = صدای کندتر؛ مثلاً ۵۰٪ برای لغت‌هایی که تند ادا می‌شوند.</p>
+    <div class="fchips">${spd}</div>
+    <p style="margin:10px 0 0"><button class="btn soft small" data-act="spktest">🔊 نمونه بشنو</button></p></div>
+  <div class="panel"><h2 style="margin-top:0">🔤 اندازه‌ی فونت</h2>
+    <p class="muted" style="margin-top:0">متن کل برنامه را بزرگ یا کوچک کن؛ انتخابت روی همین دستگاه ذخیره می‌ماند. ۱۰۰٪ = اندازه‌ی معمولی.</p>
+    <div class="fchips">${fsz}</div></div>`;
 }
 
 /* --- داده‌ها --- */
@@ -445,7 +462,7 @@ function viewData(){
   "tags": "personality"
 }]}</pre><p class="muted">فقط «word» اجباری است.</p></details></div>
   <div class="panel"><h2 style="margin-top:0">پشتیبان و انتقال</h2>
-    <p class="muted" style="margin-top:0">پشتیبان کامل شامل مرحله، زمان مرور، ستاره و سرعت صدا هر لغت است. آن را برای خودت در تلگرام بفرست و در دستگاه دیگر وارد کن؛ نسخه‌ی جدیدتر هر لغت برنده می‌شود.</p>
+    <p class="muted" style="margin-top:0">پشتیبان کامل شامل مرحله، زمان مرور و ستاره‌ی هر لغت است. آن را برای خودت در تلگرام بفرست و در دستگاه دیگر وارد کن؛ نسخه‌ی جدیدتر هر لغت برنده می‌شود.</p>
     <button class="btn" data-act="exportjson">گرفتن پشتیبان (JSON)</button>
     <p><button class="btn ghost" data-act="exportanki">خروجی برای Anki (TSV)</button></p>
     <p class="muted" id="persist"></p></div>`;
@@ -466,7 +483,7 @@ const KNOWN = new Set(["id","word","ipa","pos","fa","en","example","exampleFa","
 function normalize(x){
   const word = String(x.word || "").trim(); if (!word) return null;
   const g = k => String(x[k] ?? "").trim();
-  const extra = {};   // فیلدهای ناشناخته (مثل star و rate و lapses) نگه داشته می‌شوند تا در پشتیبان‌گیری از بین نروند
+  const extra = {};   // فیلدهای ناشناخته (مثل star و lapses) نگه داشته می‌شوند تا در پشتیبان‌گیری از بین نروند
   for (const k of Object.keys(x))
     if (!KNOWN.has(k) && !k.startsWith("__") && /^[A-Za-z_$][\w$]*$/.test(k) && x[k] != null) extra[k] = x[k];
   return {id: String(x.id || word.toLowerCase()), word, ipa: g("ipa"), pos: g("pos"), fa: g("fa"), en: g("en"),
@@ -536,19 +553,11 @@ document.addEventListener("click", async e => {
   if (t.dataset.act === "close" && e.target !== t && t.classList.contains("sheet-bg")) return; // کلیک داخل برگه
   const act = t.dataset.act;
   if (act === "tab") { tab = t.dataset.tab; render(); }
-  else if (act === "speak") { e.stopPropagation(); speak(t.dataset.text, t.dataset.id ? words.get(t.dataset.id) : null); }
+  else if (act === "speak") { e.stopPropagation(); speak(t.dataset.text); }
   else if (act === "star") {
     e.stopPropagation();
     const w = words.get(t.dataset.id); w.star = !w.star; w.updatedAt = Date.now(); await put(w);
     if (tab === "all") { if ($("#modal").innerHTML) openWord(w.id); renderList(); } else render();
-  }
-  else if (act === "wspeed") {
-    e.stopPropagation();
-    const w = words.get(t.dataset.id), r = parseFloat(t.dataset.r);
-    if (Number.isFinite(r)) w.rate = r;                            // چیپ سرعت داخل کارت
-    else w.rate = RATES[(RATES.findIndex(x => x[0] === effRate(w)) + 1) % RATES.length][0]; // چرخه در لیست
-    w.updatedAt = Date.now(); await put(w); speak(w.word, w);
-    if (tab === "all") renderList(); else render();
   }
   else if (act === "start") { const q = dueList().map(w => w.id); session = {queue: q, total: q.length, done: 0, revealed: false}; render(); }
   else if (act === "flip") { session.revealed = true; render(); }
@@ -569,6 +578,8 @@ document.addEventListener("click", async e => {
   else if (act === "ttag") { test.tag = t.dataset.val; render(); }
   else if (act === "tstar") { test.star = t.dataset.val; render(); }
   else if (act === "rate") { setRate(parseFloat(t.dataset.r)); render(); }
+  else if (act === "fs") { applyFs(parseFloat(t.dataset.v)); render(); }
+  else if (act === "spktest") { speak("vocabulary"); }
   else if (act === "tstart") {
     test.dir = $("#t-dir").value; test.mode = $("#t-mode").value;
     const L = filterChips(test, "t").pool;
