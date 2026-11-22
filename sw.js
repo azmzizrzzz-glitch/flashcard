@@ -1,10 +1,11 @@
 // سرویس‌ورکر: بعد از اولین بازکردن، برنامه بدون اینترنت هم کار می‌کند.
-// برای انتشار نسخه‌ی جدید، عدد نسخه را عوض کن.
-const V = "vocab-v1";
+// برای انتشار نسخه‌ی جدید، فقط همین عدد نسخه را عوض کن (مثلاً vocab-v3).
+const V = "vocab-v2";
 const FILES = ["./", "index.html", "manifest.json", "icon.svg", "icon-192.png", "icon-512.png"];
 
 self.addEventListener("install", e => {
-  e.waitUntil(caches.open(V).then(c => c.addAll(FILES)));
+  // allSettled: اگر یک فایل موقتاً در دسترس نبود، کل نصب خراب نشود
+  e.waitUntil(caches.open(V).then(c => Promise.allSettled(FILES.map(f => c.add(f)))));
   self.skipWaiting();
 });
 self.addEventListener("activate", e => {
@@ -14,11 +15,13 @@ self.addEventListener("activate", e => {
 // اول از حافظه بده (سریع و آفلاین)، همزمان در پس‌زمینه تازه‌اش کن
 self.addEventListener("fetch", e => {
   if (e.request.method !== "GET") return;
-  e.respondWith(caches.match(e.request).then(cached => {
+  const nav = e.request.mode === "navigate";
+  e.respondWith(caches.match(e.request, nav ? {ignoreSearch: true} : undefined).then(cached => {
     const net = fetch(e.request).then(res => {
-      if (res.ok && new URL(e.request.url).origin === location.origin) caches.open(V).then(c => c.put(e.request, res.clone()));
+      if (res && res.ok && new URL(e.request.url).origin === location.origin)
+        caches.open(V).then(c => c.put(e.request, res.clone()));
       return res;
-    }).catch(() => cached);
+    }).catch(() => cached || (nav ? caches.match("./") : undefined));
     return cached || net;
   }));
 });

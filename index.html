@@ -10,8 +10,8 @@
 <link rel="apple-touch-icon" href="icon-192.png">
 <style>
 :root{
-  --bg:#f6f2ea;--card:#fffdf8;--ink:#1d2421;--mute:#6b746f;--line:#e4ddd0;
-  --acc:#1f6f5c;--acc-ink:#fff;--acc-soft:#dcebe5;--bad:#b4492f;--bad-soft:#f6e1da;--ok-soft:#dcebe5;
+  --bg:#f6f2ea;--card:#fffdf8;--ink:#1d2421;--mute:#626c66;--line:#e4ddd0;
+  --acc:#1f6f5c;--acc-ink:#fff;--acc-soft:#dcebe5;--bad:#a8432a;--bad-soft:#f6e1da;--ok-soft:#dcebe5;
   --shadow:0 1px 2px rgba(0,0,0,.05),0 8px 24px rgba(40,50,45,.07);
 }
 @media (prefers-color-scheme:dark){
@@ -45,6 +45,13 @@ button{cursor:pointer;border:0;background:none}
 .stat span{color:var(--mute);font-size:.82rem}
 .chips{display:flex;flex-wrap:wrap;gap:6px;margin:6px 0 2px}
 .chip{font-size:.78rem;padding:2px 10px;border-radius:99px;background:var(--acc-soft);color:var(--acc)}
+.fchips{display:flex;flex-wrap:wrap;gap:8px;margin:4px 0 8px}
+.fchip{display:inline-flex;align-items:center;gap:7px;min-height:44px;padding:4px 14px;border-radius:14px;
+  border:1px solid var(--line);background:var(--card);font-size:.9rem;font-weight:600;color:var(--ink)}
+.fchip small{font-weight:400;font-size:.78rem;color:var(--mute)}
+.fchip.on{background:var(--acc);border-color:var(--acc);color:var(--acc-ink)}
+.fchip.on small{color:var(--acc-ink);opacity:.8}
+.fchip:disabled{opacity:.4;cursor:default}
 .card{background:var(--card);border:1px solid var(--line);border-radius:24px;box-shadow:var(--shadow);min-height:320px;padding:28px 22px;
   display:flex;flex-direction:column;justify-content:center;align-items:center;text-align:center;gap:10px;margin:14px 0;cursor:pointer}
 .card .word{font-size:2.4rem;font-weight:700;line-height:1.2;letter-spacing:-.01em;direction:ltr;cursor:pointer}
@@ -106,8 +113,8 @@ h2{font-size:1.05rem;margin:18px 0 6px}
 <script>
 "use strict";
 /* ---------- تنظیمات ---------- */
-// فاصله‌ی مرورها (روز). مرحله‌ی ۰ = همان امروز (لغت تازه وارد شده)
-const STAGES = [0, 1, 3, 7, 14, 30, 60];
+// فاصله‌ی مرورها (روز). مرحله‌ی ۰ = همان امروز (لغت تازه وارد شده)، آخرین مرحله = روز ۹۰
+const STAGES = [0, 1, 3, 7, 14, 30, 60, 90];
 
 /* ---------- ابزارهای کوچک ---------- */
 const $ = s => document.querySelector(s);
@@ -149,10 +156,13 @@ async function grade(w, g){
 }
 
 /* ---------- تلفظ ---------- */
+let rate = 1;   // سرعت پخش تلفظ — در تب «تست» قابل تغییر است و ذخیره می‌شود
+try { rate = parseFloat(localStorage.getItem("vocab-rate")) || 1; } catch (e) {}
+function setRate(r){ rate = r; try { localStorage.setItem("vocab-rate", String(r)); } catch (e) {} }
 function speak(text){
   if (!("speechSynthesis" in window)) return toast("این مرورگر تلفظ را پشتیبانی نمی‌کند");
   const synth = window.speechSynthesis; synth.cancel();
-  const u = new SpeechSynthesisUtterance(text); u.lang = "en-US"; u.rate = .9;
+  const u = new SpeechSynthesisUtterance(text); u.lang = "en-US"; u.rate = rate;
   const v = synth.getVoices().find(v => v.lang.replace("_","-").toLowerCase() === "en-us") || synth.getVoices().find(v => v.lang.toLowerCase().startsWith("en"));
   if (v) u.voice = v; else if (synth.getVoices().length) toast("صدای انگلیسی روی این دستگاه نصب نیست");
   synth.speak(u);
@@ -186,7 +196,7 @@ function fullCardHTML(w){
 /* ---------- وضعیت صفحه ---------- */
 let tab = "today";
 let session = null;               // مرور امروز
-let test = {stage: "all", dir: "en", mode: "shuffle", list: null, i: 0, shown: false};
+let test = {stage: "all", tag: "all", dir: "en", mode: "shuffle", list: null, i: 0, shown: false};
 
 const TABS = [["today","📅","امروز"],["all","📚","همه لغت‌ها"],["test","🎯","تست"],["data","💾","داده‌ها"]];
 function renderNav(){
@@ -198,6 +208,7 @@ function render(){
   $("#sub").textContent = live().length ? `${live().length} لغت · ${dueN} برای امروز` : "";
   $("#view").innerHTML = ({today: viewToday, all: viewAll, test: viewTest, data: viewData})[tab]();
   if (tab === "all") renderList();
+  if (tab === "data") renderPersist();
   window.scrollTo(0, 0);
 }
 
@@ -228,7 +239,7 @@ function viewSession(){
   const nextGood = STAGES[Math.min(w.stage+1, STAGES.length-1)], nextEasy = STAGES[Math.min(w.stage+2, STAGES.length-1)];
   return `<div class="muted" style="display:flex;justify-content:space-between"><span>${s.done} از ${s.total}</span><span>${stageLabel(w.stage)}</span></div>
     <div class="progress"><i style="width:${pct}%"></i></div>
-    <div class="card" data-act="flip">${frontHTML(w,"en")}${s.revealed ? `<hr>${backHTML(w,"en").split("<hr>").slice(1).join("")}` : `<div class="hint">برای دیدن معنی بزن</div>`}</div>
+    <div class="card" data-act="flip">${frontHTML(w,"en")}${s.revealed ? `<hr>${backHTML(w,"en")}` : `<div class="hint">برای دیدن معنی بزن</div>`}</div>
     ${s.revealed
       ? `<div class="grades">
           <button class="g-again" data-act="grade" data-g="again">بلد نبودم<small>دوباره امروز</small></button>
@@ -270,17 +281,36 @@ function viewTest(){
     const w = words.get(test.list[test.i]);
     return `<div class="muted" style="display:flex;justify-content:space-between"><span>${test.i+1} از ${test.list.length}</span><span>حالت تست · روی زمان‌بندی اثر ندارد</span></div>
       <div class="progress"><i style="width:${Math.round(100*(test.i+1)/test.list.length)}%"></i></div>
-      <div class="card" data-act="tflip">${frontHTML(w,test.dir)}${test.shown ? `<hr>${backHTML(w,test.dir).split("<hr>").slice(test.dir==="fa"?1:1).join("")}` : `<div class="hint">برای دیدن پشت کارت بزن</div>`}</div>
+      <div class="card" data-act="tflip">${frontHTML(w,test.dir)}${test.shown ? `<hr>${backHTML(w,test.dir)}` : `<div class="hint">برای دیدن پشت کارت بزن</div>`}</div>
       <div class="two"><button class="btn ghost" data-act="tprev">قبلی</button><button class="btn" data-act="tnext">بعدی</button></div>
       <p style="text-align:center"><button class="btn ghost small" data-act="tend">خروج از تست</button></p>`;
   }
-  const opts = STAGES.map((d,i) => `<option value="${i}" ${test.stage==String(i)?"selected":""}>فقط ${stageLabel(i)}</option>`).join("");
+  const t0 = today(), all = live();
+  const counts = STAGES.map(() => 0); all.forEach(w => counts[w.stage]++);
+  const dueN = all.filter(w => w.due <= t0).length;
+  const chip = (on, act, val, label, n, dis) =>
+    `<button class="fchip${on ? " on" : ""}" data-act="${act}" data-val="${esc(val)}"${dis ? " disabled" : ""}>${label}${n != null ? `<small>${n}</small>` : ""}</button>`;
+  const stageChips = [chip(test.stage==="all", "tstage", "all", "همه", all.length),
+      chip(test.stage==="due", "tstage", "due", "سررسیدشده", dueN, !dueN),
+      ...STAGES.map((d,i) => chip(test.stage===String(i), "tstage", String(i), stageLabel(i), counts[i], !counts[i]))].join("");
+  const tagCounts = {};
+  all.forEach(w => String(w.tags||"").split(/[\s,،]+/).filter(Boolean).forEach(tg => tagCounts[tg] = (tagCounts[tg]||0)+1));
+  const tagList = Object.keys(tagCounts).sort().slice(0, 12);
+  const tagChips = tagList.map(tg => chip(test.tag===tg, "ttag", tg, tg, tagCounts[tg])).join("");
+  const pool = all.filter(w =>
+    (test.stage==="all" || (test.stage==="due" ? w.due<=t0 : w.stage===Number(test.stage))) &&
+    (test.tag==="all" || String(w.tags||"").split(/[\s,،]+/).includes(test.tag)));
+  const rateChips = [[1,"۱۰۰٪"],[.75,"۷۵٪"],[.5,"۵۰٪"],[.25,"۲۵٪"]]
+    .map(([r,l]) => `<button class="fchip${rate===r ? " on" : ""}" data-act="rate" data-r="${r}">${l}</button>`).join("");
   return `<div class="panel"><p class="muted" style="margin-top:0">اینجا می‌توانی هر لغتی را هر چند بار که خواستی مرور کنی، بدون این‌که زمان‌بندی تغییر کند.</p>
-    <label class="f">کدام لغت‌ها؟</label>
-    <select id="t-stage"><option value="all" ${test.stage==="all"?"selected":""}>همه‌ی لغت‌ها</option><option value="due" ${test.stage==="due"?"selected":""}>فقط سررسیدشده‌ها</option>${opts}</select>
+    <label class="f">کدام لغت‌ها؟ (بر اساس مرحله)</label>
+    <div class="fchips">${stageChips}</div>
+    ${tagList.length ? `<label class="f">برچسب</label><div class="fchips">${chip(test.tag==="all","ttag","all","همه",all.length)}${tagChips}</div>` : ""}
     <div class="two"><div><label class="f">جهت</label><select id="t-dir"><option value="en" ${test.dir==="en"?"selected":""}>انگلیسی ← فارسی</option><option value="fa" ${test.dir==="fa"?"selected":""}>فارسی ← انگلیسی</option></select></div>
     <div><label class="f">ترتیب</label><select id="t-mode"><option value="shuffle" ${test.mode==="shuffle"?"selected":""}>تصادفی</option><option value="alpha" ${test.mode==="alpha"?"selected":""}>الفبایی</option></select></div></div>
-    <p><button class="btn" data-act="tstart">شروع</button></p></div>`;
+    <label class="f">سرعت تلفظ</label>
+    <div class="fchips">${rateChips}</div>
+    <p><button class="btn" data-act="tstart">شروع تست (${pool.length} لغت)</button></p></div>`;
 }
 
 /* --- داده‌ها --- */
@@ -309,13 +339,27 @@ function viewData(){
     <p><button class="btn ghost" data-act="exportanki">خروجی برای Anki (TSV)</button></p>
     <p class="muted" id="persist"></p></div>`;
 }
+function renderPersist(){
+  const el = $("#persist"); if (!el) return;
+  const est = navigator.storage && navigator.storage.estimate ? navigator.storage.estimate() : Promise.resolve(null);
+  const per = navigator.storage && navigator.storage.persisted ? navigator.storage.persisted() : Promise.resolve(null);
+  Promise.all([est, per]).then(([e, ok]) => {
+    const kb = e && e.usage ? ` (${(e.usage / 1024).toFixed(0)} کیلوبایت)` : "";
+    const g = ok == null ? "" : ok ? " · محافظت در برابر پاک‌سازی خودکار: فعال" : " · محافظت در برابر پاک‌سازی خودکار: غیرفعال";
+    el.textContent = `داده‌ها هر لحظه به‌صورت خودکار روی همین دستگاه ذخیره می‌شود${kb}${g}. پشتیبان‌گیری فقط برای انتقال به دستگاه دیگر یا نسخه‌ی احتیاطی است.`;
+  }).catch(() => {});
+}
 
 /* ---------- ورودی و خروجی ---------- */
+const KNOWN = new Set(["id","word","ipa","pos","fa","en","example","exampleFa","related","tags","source","stage","due","updatedAt","deleted"]);
 function normalize(x){
   const word = String(x.word || "").trim(); if (!word) return null;
   const g = k => String(x[k] ?? "").trim();
+  const extra = {};   // فیلدهای ناشناخته (مثلاً lapses در نسخه‌های بعدی) نگه داشته می‌شوند تا در پشتیبان‌گیری از بین نروند
+  for (const k of Object.keys(x))
+    if (!KNOWN.has(k) && !k.startsWith("__") && /^[A-Za-z_$][\w$]*$/.test(k) && x[k] != null) extra[k] = x[k];
   return {id: String(x.id || word.toLowerCase()), word, ipa: g("ipa"), pos: g("pos"), fa: g("fa"), en: g("en"),
-          example: g("example"), exampleFa: g("exampleFa"), related: g("related"), tags: g("tags"), source: g("source")};
+          example: g("example"), exampleFa: g("exampleFa"), related: g("related"), tags: g("tags"), source: g("source"), ...extra};
 }
 async function importText(text){
   let data; try { data = JSON.parse(text); } catch { return toast("فایل JSON معتبر نیست"); }
@@ -324,7 +368,10 @@ async function importText(text){
   let added = 0, updated = 0, skipped = 0;
   for (const raw of list) {
     const n = normalize(raw); if (!n) { skipped++; continue; }
-    const hasState = Number.isFinite(raw.updatedAt) && Number.isInteger(raw.stage) && /^\d{4}-\d\d-\d\d$/.test(raw.due || "");
+    const dd = raw.due ? new Date(raw.due + "T00:00") : null;
+    const dueOk = !!dd && /^\d{4}-\d\d-\d\d$/.test(raw.due) && !isNaN(dd) && fmt(dd) === raw.due;
+    const hasState = Number.isFinite(raw.updatedAt) && Number.isInteger(raw.stage)
+      && raw.stage >= 0 && raw.stage < STAGES.length && dueOk;
     const old = words.get(n.id);
     if (!old || (old.deleted && !hasState)) {                      // لغت تازه → روز 0
       await put({...n, stage: hasState ? Math.min(raw.stage, STAGES.length-1) : 0, due: hasState ? raw.due : today(),
@@ -379,10 +426,14 @@ document.addEventListener("click", async e => {
   else if (act === "close") $("#modal").innerHTML = "";
   else if (act === "del") { const w = words.get(t.dataset.id); w.deleted = true; w.updatedAt = Date.now(); await put(w); $("#modal").innerHTML = ""; toast("حذف شد"); render(); }
   else if (act === "reset") { const w = words.get(t.dataset.id); w.stage = 0; w.due = today(); w.updatedAt = Date.now(); await put(w); $("#modal").innerHTML = ""; toast("به روز 0 برگشت"); render(); }
+  else if (act === "tstage") { test.stage = t.dataset.val; render(); }
+  else if (act === "ttag") { test.tag = t.dataset.val; render(); }
+  else if (act === "rate") { setRate(parseFloat(t.dataset.r)); render(); }
   else if (act === "tstart") {
-    test.stage = $("#t-stage").value; test.dir = $("#t-dir").value; test.mode = $("#t-mode").value;
+    test.dir = $("#t-dir").value; test.mode = $("#t-mode").value;
     let L = live(); const t0 = today();
     if (test.stage === "due") L = L.filter(w => w.due <= t0); else if (test.stage !== "all") L = L.filter(w => w.stage === Number(test.stage));
+    if (test.tag !== "all") L = L.filter(w => String(w.tags || "").split(/[\s,،]+/).includes(test.tag));
     if (!L.length) return toast("لغتی با این فیلتر نیست");
     L = test.mode === "shuffle" ? shuffle(L) : L.sort((a,b) => a.word.localeCompare(b.word));
     test.list = L.map(w => w.id); test.i = 0; test.shown = false; render();
@@ -410,7 +461,15 @@ $("#file").addEventListener("change", async e => {
   } catch (err) { $("#view").innerHTML = `<div class="empty">دسترسی به حافظه‌ی مرورگر ممکن نیست.<br>(حالت خصوصی؟)</div>`; return; }
   render();
   if ("speechSynthesis" in window) speechSynthesis.getVoices();
-  if ("serviceWorker" in navigator) navigator.serviceWorker.register("sw.js").catch(() => {});
+  if ("serviceWorker" in navigator) navigator.serviceWorker.register("sw.js").then(r => {
+    r.addEventListener("updatefound", () => {
+      const nw = r.installing; if (!nw) return;
+      nw.addEventListener("statechange", () => {
+        if (nw.state === "installed" && navigator.serviceWorker.controller)
+          toast("نسخه‌ی جدید آماده است — برنامه را یک بار ببند و دوباره باز کن");
+      });
+    });
+  }).catch(() => {});
   if (navigator.storage && navigator.storage.persist) navigator.storage.persist().then(ok => { window.__persisted = ok; });
 })();
 </script>
