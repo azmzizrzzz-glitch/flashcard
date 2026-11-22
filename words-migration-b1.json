@@ -1,0 +1,254 @@
+{
+ "words": [
+  {
+   "word": "immigrant",
+   "ipa": "/ˈɪmɪɡrənt/",
+   "pos": "n.",
+   "fa": "مهاجر (کسی که وارد کشور دیگری می‌شود تا آنجا زندگی کند)",
+   "en": "a person who comes to live permanently in a foreign country",
+   "example": "Many immigrants move to Canada to find better jobs.",
+   "exampleFa": "بسیاری از مهاجران برای پیدا کردن کار بهتر به کانادا می‌روند.",
+   "tags": "migration B1"
+  },
+  {
+   "word": "emigrate",
+   "ipa": "/ˈemɪɡreɪt/",
+   "pos": "v.",
+   "fa": "مهاجرت کردن (از کشور خودت به جای دیگر)",
+   "en": "to leave your own country to live in another one",
+   "example": "My cousin decided to emigrate to Germany last year.",
+   "exampleFa": "پسرعمویم پارسال تصمیم گرفت به آلمان مهاجرت کند.",
+   "tags": "migration B1"
+  },
+  {
+   "word": "citizen",
+   "ipa": "/ˈsɪtɪzn/",
+   "pos": "n.",
+   "fa": "شهروند",
+   "en": "a person who legally belongs to a country",
+   "example": "You must live here for five years before you can become a citizen.",
+   "exampleFa": "باید پنج سال اینجا زندگی کنی تا بتوانی شهروند شوی.",
+   "tags": "migration B1"
+  },
+  {
+   "word": "citizenship",
+   "ipa": "/ˈsɪtɪznʃɪp/",
+   "pos": "n.",
+   "fa": "تابعیت، شهروندی",
+   "en": "the legal right to belong to a country",
+   "example": "She received citizenship after ten years in the country.",
+   "exampleFa": "او بعد از ده سال زندگی در این کشور تابعیت گرفت.",
+   "tags": "migration B1"
+  },
+  {
+   "word": "visa",
+   "ipa": "/ˈviːzə/",
+   "pos": "n.",
+   "fa": "ویزا، روادید",
+   "en": "an official document that allows you to enter or stay in a country",
+   "example": "I need a student visa to study in the UK.",
+   "exampleFa": "برای تحصیل در انگلستان به ویزای دانشجویی نیاز دارم.",
+   "tags": "migration B1"
+  },
+  {
+   "word": "passport",
+   "ipa": "/ˈpɑːspɔːt/",
+   "pos": "n.",
+   "fa": "گذرنامه، پاسپورت",
+   "en": "an official document you need to travel to other countries",
+   "example": "Don't forget to bring your passport to the interview.",
+   "exampleFa": "یادت نره گذرنامه‌ات رو به مصاحبه بیاری.",
+   "tags": "migration B1"
+  },
+  {
+   "word": "border",
+   "ipa": "/ˈbɔːdə(r)/",
+   "pos": "n.",
+   "fa": "مرز",
+   "en": "the line that separates two countries",
+   "example": "We waited two hours at the border.",
+   "exampleFa": "دو ساعت در مرز منتظر ماندیم.",
+   "tags": "migration B1"
+  },
+  {
+   "word": "residence permit",
+   "ipa": "/ˈrezɪdəns ˈpɜːmɪt/",
+   "pos": "n.",
+   "fa": "اجازه‌ی اقامت",
+   "en": "official permission to live in a country for a period of time",
+   "example": "He renewed his residence permit before it expired.",
+   "exampleFa": "او اجازه‌ی اقامتش را قبل از تمام شدن اعتبارش تمدید کرد.",
+   "tags": "migration B1"
+  },
+  {
+   "word": "work permit",
+   "ipa": "/ˈwɜːk ˈpɜːmɪt/",
+   "pos": "n.",
+   "fa": "مجوز کار",
+   "en": "official permission to work in a country",
+   "example": "Without a work permit, you can't legally get a job here.",
+   "exampleFa": "بدون مجوز کار نمی‌توانی به‌طور قانونی اینجا شغل بگیری.",
+   "tags": "migration B1"
+  },
+  {
+   "word": "apply",
+   "ipa": "/əˈplaɪ/",
+   "pos": "v.",
+   "fa": "درخواست دادن، اقدام کردن",
+   "en": "to ask officially for something, usually in writing",
+   "example": "I'm going to apply for a scholarship next month.",
+   "exampleFa": "ماه بعد برای بورسیه اقدام می‌کنم.",
+   "tags": "migration B1"
+  },
+  {
+   "word": "application",
+   "ipa": "/ˌæplɪˈkeɪʃn/",
+   "pos": "n.",
+   "fa": "درخواست، فرم درخواست",
+   "en": "a formal request for something, such as a visa or a job",
+   "example": "The application form takes about an hour to fill in.",
+   "exampleFa": "پر کردن فرم درخواست حدود یک ساعت طول می‌کشد.",
+   "tags": "migration B1"
+  },
+  {
+   "word": "deadline",
+   "ipa": "/ˈdedlaɪn/",
+   "pos": "n.",
+   "fa": "مهلت، آخرین مهلت",
+   "en": "the latest time or date by which something must be done",
+   "example": "The deadline for sending the documents is March 1st.",
+   "exampleFa": "مهلت ارسال مدارک اول مارس است.",
+   "tags": "migration B1"
+  },
+  {
+   "word": "requirement",
+   "ipa": "/rɪˈkwaɪəmənt/",
+   "pos": "n.",
+   "fa": "شرط، الزام",
+   "en": "something that you must have or do",
+   "example": "A language certificate is a basic requirement for this visa.",
+   "exampleFa": "مدرک زبان شرط اصلی این ویزاست.",
+   "tags": "migration B1"
+  },
+  {
+   "word": "refugee",
+   "ipa": "/ˌrefjuˈdʒiː/",
+   "pos": "n.",
+   "fa": "پناهنده",
+   "en": "a person who has to leave their country because of war or danger",
+   "example": "Thousands of refugees crossed the border last winter.",
+   "exampleFa": "هزاران پناهنده زمستان گذشته از مرز عبور کردند.",
+   "tags": "migration B1"
+  },
+  {
+   "word": "asylum",
+   "ipa": "/əˈsaɪləm/",
+   "pos": "n.",
+   "fa": "پناهندگی",
+   "en": "protection given by a country to people who have left their own country because of danger",
+   "example": "He asked for asylum because it was not safe in his country.",
+   "exampleFa": "او چون در کشورش امنیت نداشت درخواست پناهندگی کرد.",
+   "tags": "migration B1"
+  },
+  {
+   "word": "scholarship",
+   "ipa": "/ˈskɒləʃɪp/",
+   "pos": "n.",
+   "fa": "بورسیه",
+   "en": "money given to a student to help pay for their education",
+   "example": "She won a scholarship to study in the Netherlands.",
+   "exampleFa": "او بورسیه‌ی تحصیل در هلند را برنده شد.",
+   "tags": "migration B1"
+  },
+  {
+   "word": "tuition fee",
+   "ipa": "/tjuˈɪʃn fiː/",
+   "pos": "n.",
+   "fa": "شهریه",
+   "en": "the money you pay to a university or school for teaching",
+   "example": "The tuition fee is lower for students from some countries.",
+   "exampleFa": "شهریه برای دانشجویان بعضی کشورها کمتر است.",
+   "tags": "migration B1"
+  },
+  {
+   "word": "accommodation",
+   "ipa": "/əˌkɒməˈdeɪʃn/",
+   "pos": "n.",
+   "fa": "محل اقامت، جا (برای زندگی)",
+   "en": "a place to live or stay",
+   "example": "Finding cheap accommodation in a big city is difficult.",
+   "exampleFa": "پیدا کردن جای ارزان در شهر بزرگ سخت است.",
+   "tags": "migration B1"
+  },
+  {
+   "word": "embassy",
+   "ipa": "/ˈembəsi/",
+   "pos": "n.",
+   "fa": "سفارت",
+   "en": "the official building of a foreign government in a country",
+   "example": "I have an appointment at the embassy on Monday.",
+   "exampleFa": "دوشنبه در سفارت وقت دارم.",
+   "tags": "migration B1"
+  },
+  {
+   "word": "interview",
+   "ipa": "/ˈɪntəvjuː/",
+   "pos": "n.",
+   "fa": "مصاحبه",
+   "en": "a formal meeting where someone asks you questions",
+   "example": "The visa interview was shorter than I expected.",
+   "exampleFa": "مصاحبه‌ی ویزا کوتاه‌تر از چیزی بود که انتظار داشتم.",
+   "tags": "migration B1"
+  },
+  {
+   "word": "settle",
+   "ipa": "/ˈsetl/",
+   "pos": "v.",
+   "fa": "مستقر شدن، جا افتادن",
+   "en": "to start living in a place permanently and feel comfortable there",
+   "example": "It took them a year to settle in their new city.",
+   "exampleFa": "یک سال طول کشید تا در شهر جدیدشان مستقر شوند.",
+   "tags": "migration B1"
+  },
+  {
+   "word": "abroad",
+   "ipa": "/əˈbrɔːd/",
+   "pos": "adv.",
+   "fa": "خارج از کشور، در خارج",
+   "en": "in or to a foreign country",
+   "example": "Many young people dream of working abroad.",
+   "exampleFa": "بسیاری از جوان‌ها آرزوی کار در خارج از کشور را دارند.",
+   "tags": "migration B1"
+  },
+  {
+   "word": "integrate",
+   "ipa": "/ˈɪntɪɡreɪt/",
+   "pos": "v.",
+   "fa": "جذب شدن، ادغام شدن (در جامعه)",
+   "en": "to become a full member of a group or community",
+   "example": "Learning the language helps you integrate into society.",
+   "exampleFa": "یادگیری زبان به جذب شدن در جامعه کمک می‌کند.",
+   "tags": "migration B1"
+  },
+  {
+   "word": "homesick",
+   "ipa": "/ˈhəʊmsɪk/",
+   "pos": "adj.",
+   "fa": "دلتنگ وطن، دلتنگ خانه",
+   "en": "sad because you are away from home",
+   "example": "I felt homesick during my first winter abroad.",
+   "exampleFa": "در اولین زمستانم در خارج از کشور دلتنگ وطن بودم.",
+   "tags": "migration B1"
+  },
+  {
+   "word": "culture shock",
+   "ipa": "/ˈkʌltʃə ʃɒk/",
+   "pos": "n.",
+   "fa": "شوک فرهنگی",
+   "en": "the confused feeling you get in a country with a very different way of life",
+   "example": "Culture shock can be strong in the first few weeks.",
+   "exampleFa": "شوک فرهنگی در چند هفته‌ی اول می‌تواند شدید باشد.",
+   "tags": "migration B1"
+  }
+ ]
+}
