@@ -235,7 +235,7 @@ function fullCardHTML(w){
 let tab = "today";
 let session = null;               // مرور امروز
 let test = {stage: "all", tag: "all", star: "all", dir: "en", mode: "shuffle", list: null, i: 0, shown: false};
-let typer = {stage: "all", tag: "all", star: "all", mode: "shuffle", list: null, i: 0, state: "ask", typed: "", ok: false};
+let typer = {stage: "all", tag: "all", star: "all", mode: "shuffle", list: null, i: 0, state: "ask", typed: "", ok: false};   // زمان‌بندی مستقل تایپ: tstage/tdue روی هر لغت
 
 const TABS = [["today","📅","امروز"],["all","📚","لغت‌ها"],["type","⌨","تایپ"],["test","🎯","تست"],["data","💾","داده‌ها"],["settings","⚙️","تنظیمات"]];
 function renderNav(){
@@ -254,11 +254,13 @@ function render(){
   window.scrollTo(0, 0);
 }
 
-/* --- چیپ‌های فیلتر مشترک بین تست و تایپ --- */
-function filterChips(st, P){
+/* --- چیپ‌های فیلتر مشترک بین تست و تایپ (ty=true یعنی شمارش با زمان‌بندی مخصوص تایپ) --- */
+function filterChips(st, P, ty){
   const t0 = today(), all = live();
-  const counts = STAGES.map(() => 0); all.forEach(w => counts[w.stage]++);
-  const dueN = all.filter(w => w.due <= t0).length;
+  const gS = w => ty ? (Number.isInteger(w.tstage) ? w.tstage : 0) : w.stage;
+  const gD = w => ty ? (typeof w.tdue === "string" ? w.tdue : t0) : w.due;
+  const counts = STAGES.map(() => 0); all.forEach(w => { const s = gS(w); if (s >= 0 && s < STAGES.length) counts[s]++; });
+  const dueN = all.filter(w => gD(w) <= t0).length;
   const starN = all.filter(w => w.star).length;
   const chip = (on, act, val, label, n, dis) =>
     `<button class="fchip${on ? " on" : ""}" data-act="${act}" data-val="${esc(val)}"${dis ? " disabled" : ""}>${label}${n != null ? `<small>${n}</small>` : ""}</button>`;
@@ -272,7 +274,7 @@ function filterChips(st, P){
   const tagList = Object.keys(tagCounts).sort().slice(0, 12);
   const tagChips = tagList.map(tg => chip(st.tag===tg, P+"tag", tg, tg, tagCounts[tg])).join("");
   const pool = all.filter(w =>
-    (st.stage==="all" || (st.stage==="due" ? w.due<=t0 : w.stage===Number(st.stage))) &&
+    (st.stage==="all" || (st.stage==="due" ? gD(w)<=t0 : gS(w)===Number(st.stage))) &&
     (st.star==="all" || !!w.star) &&
     (st.tag==="all" || String(w.tags||"").split(/[\s,،]+/).includes(st.tag)));
   return {stageChips, starChips, tagChips, pool, hasTags: tagList.length > 0, chip};
@@ -334,20 +336,23 @@ function renderList(){
 }
 function openWord(id){
   const w = words.get(id); if (!w) return;
+  const td = typeof w.tdue === "string" ? w.tdue : today();
   $("#modal").innerHTML = `<div class="sheet-bg" data-act="close"><div class="sheet" data-nofocus>
     ${fullCardHTML(w)}
-    <p class="muted" style="text-align:center">${stageLabel(w.stage)} · مرور بعدی: ${w.due <= today() ? "الان" : whenText(daysBetween(today(), w.due))}</p>
+    <p class="muted" style="text-align:center">مرور: ${stageLabel(w.stage)} · بعدی: ${w.due <= today() ? "الان" : whenText(daysBetween(today(), w.due))}<br>
+    تایپ: ${stageLabel(Number.isInteger(w.tstage) ? w.tstage : 0)} · بعدی: ${td <= today() ? "الان" : whenText(daysBetween(today(), td))}</p>
     <div class="two"><button class="btn bad" data-act="del" data-id="${esc(w.id)}">حذف</button>
-    <button class="btn soft" data-act="reset" data-id="${esc(w.id)}">برگشت به روز 0</button></div>
+    <button class="btn soft" data-act="reset" data-id="${esc(w.id)}">برگشت مرور به روز 0</button></div>
+    <p style="margin:10px 0"><button class="btn ghost" data-act="tyreset" data-id="${esc(w.id)}">برگشت تایپ به روز 0</button></p>
     <p style="margin-top:10px"><button class="btn ghost" data-act="close">بستن</button></p></div></div>`;
 }
 
-/* --- تایپ (معکوس؛ با اثر روی زمان‌بندی مثل کارت اصلی) --- */
+/* --- تایپ (معکوس؛ زمان‌بندی مستقل با همان الگوی روزها — روی مرور کارت اثر ندارد) --- */
 function viewType(){
   if (!live().length) return `<div class="empty"><div class="big">⌨</div><p>اول لغت وارد کن.</p></div>`;
   if (typer.list) {
     const w = words.get(typer.list[typer.i]);
-    if (typer.state === "ask") return `<div class="muted" style="display:flex;justify-content:space-between"><span>${typer.i+1} از ${typer.list.length}</span><span>تایپ · روی زمان‌بندی اثر دارد</span></div>
+    if (typer.state === "ask") return `<div class="muted" style="display:flex;justify-content:space-between"><span>${typer.i+1} از ${typer.list.length}</span><span>تایپ · زمان‌بندی مستقل از مرور</span></div>
       <div class="progress"><i style="width:${Math.round(100*(typer.i+1)/typer.list.length)}%"></i></div>
       <div class="card" data-nofocus>${starBtn(w)}
         <div class="fa-big" dir="rtl">${esc(w.fa)}</div>
@@ -356,8 +361,8 @@ function viewType(){
         <div class="hint">Enter = بررسی</div></div>
       <p style="text-align:center"><button class="btn ghost small" data-act="tyend">خروج از تایپ</button></p>`;
     const moved = typer.ok
-      ? `مرحله‌ی بعد: ${stageLabel(w.stage)} · مرور ${whenText(daysBetween(today(), w.due))}`
-      : `برگشت به ${stageLabel(w.stage)} · همان امروز دوباره`;
+      ? `تایپ: یک مرحله جلوتر (${stageLabel(w.tstage)}) · تمرین بعدی ${whenText(daysBetween(today(), w.tdue))}`
+      : `تایپ برگشت به ${stageLabel(w.tstage)} · همین امروز دوباره (مرور کارت دست‌نخورده)`;
     return `<div class="muted" style="display:flex;justify-content:space-between"><span>${typer.i+1} از ${typer.list.length}</span><span>نتیجه</span></div>
       <div class="progress"><i style="width:${Math.round(100*(typer.i+1)/typer.list.length)}%"></i></div>
       <div class="panel ${typer.ok ? "res-good" : "res-bad"}" style="text-align:center">
@@ -371,9 +376,9 @@ function viewType(){
       <button class="btn" data-act="tynext">لغت بعدی</button>
       <p style="text-align:center"><button class="btn ghost small" data-act="tyend">خروج از تایپ</button></p>`;
   }
-  const F = filterChips(typer, "y");
-  return `<div class="panel"><p class="muted" style="margin-top:0">معنی فارسی را می‌بینی و انگلیسی‌اش را تایپ می‌کنی. درست = یک مرحله جلوتر (مثل «بلد بودم»)؛ غلط = برگشت به روز 0 و تکرار در همین جلسه، مثل «بلد نبودم».</p>
-    <label class="f">کدام لغت‌ها؟ (بر اساس مرحله)</label>
+  const F = filterChips(typer, "y", true);
+  return `<div class="panel"><p class="muted" style="margin-top:0">معنی فارسی را می‌بینی و انگلیسی‌اش را تایپ می‌کنی. تایپ زمان‌بندی مستقل خودش را دارد (با همان الگوی روزها): درست = یک مرحله جلوتر؛ غلط = برگشت به روز 0 فقط در تایپ — مرور کارت اصلی عقب نمی‌رود. غلط‌ها آخر جلسه تکرار می‌شوند.</p>
+    <label class="f">کدام لغت‌ها؟ (بر اساس مرحله‌ی تایپ)</label>
     <div class="fchips">${F.stageChips}</div>
     <label class="f">ستاره‌ها</label>
     <div class="fchips">${F.starChips}</div>
@@ -408,7 +413,7 @@ function viewTest(){
   if (!live().length) return `<div class="empty"><div class="big">🎯</div><p>اول لغت وارد کن.</p></div>`;
   if (test.list) {
     const w = words.get(test.list[test.i]);
-    return `<div class="muted" style="display:flex;justify-content:space-between"><span>${test.i+1} از ${test.list.length}</span><span>حالت تست · روی زمان‌بندی اثر ندارد</span></div>
+    return `<div class="muted" style="display:flex;justify-content:space-between"><span>${test.i+1} از ${test.list.length}</span><span>حالت تست · مرور و تایپ را تغییر نمی‌دهد</span></div>
       <div class="progress"><i style="width:${Math.round(100*(test.i+1)/test.list.length)}%"></i></div>
       <div class="card" data-act="tflip">${starBtn(w)}${frontHTML(w,test.dir)}${test.shown ? `<hr>${backHTML(w,test.dir)}` : `<div class="hint">برای دیدن پشت کارت بزن</div>`}</div>
       <div class="two"><button class="btn ghost" data-act="tprev">قبلی</button><button class="btn" data-act="tnext">بعدی</button></div>
@@ -462,7 +467,7 @@ function viewData(){
   "tags": "personality"
 }]}</pre><p class="muted">فقط «word» اجباری است.</p></details></div>
   <div class="panel"><h2 style="margin-top:0">پشتیبان و انتقال</h2>
-    <p class="muted" style="margin-top:0">پشتیبان کامل شامل مرحله، زمان مرور و ستاره‌ی هر لغت است. آن را برای خودت در تلگرام بفرست و در دستگاه دیگر وارد کن؛ نسخه‌ی جدیدتر هر لغت برنده می‌شود.</p>
+    <p class="muted" style="margin-top:0">پشتیبان کامل شامل مرحله و زمان مرور، مرحله و زمان تایپ، و ستاره‌ی هر لغت است. آن را برای خودت در تلگرام بفرست و در دستگاه دیگر وارد کن؛ نسخه‌ی جدیدتر هر لغت برنده می‌شود.</p>
     <button class="btn" data-act="exportjson">گرفتن پشتیبان (JSON)</button>
     <p><button class="btn ghost" data-act="exportanki">خروجی برای Anki (TSV)</button></p>
     <p class="muted" id="persist"></p></div>`;
@@ -483,7 +488,7 @@ const KNOWN = new Set(["id","word","ipa","pos","fa","en","example","exampleFa","
 function normalize(x){
   const word = String(x.word || "").trim(); if (!word) return null;
   const g = k => String(x[k] ?? "").trim();
-  const extra = {};   // فیلدهای ناشناخته (مثل star و lapses) نگه داشته می‌شوند تا در پشتیبان‌گیری از بین نروند
+  const extra = {};   // فیلدهای ناشناخته (مثل star و tstage/tdue و lapses) نگه داشته می‌شوند تا در پشتیبان‌گیری از بین نروند
   for (const k of Object.keys(x))
     if (!KNOWN.has(k) && !k.startsWith("__") && /^[A-Za-z_$][\w$]*$/.test(k) && x[k] != null) extra[k] = x[k];
   return {id: String(x.id || word.toLowerCase()), word, ipa: g("ipa"), pos: g("pos"), fa: g("fa"), en: g("en"),
@@ -500,12 +505,17 @@ async function importText(text){
     const dueOk = !!dd && /^\d{4}-\d\d-\d\d$/.test(raw.due) && !isNaN(dd) && fmt(dd) === raw.due;
     const hasState = Number.isFinite(raw.updatedAt) && Number.isInteger(raw.stage)
       && raw.stage >= 0 && raw.stage < STAGES.length && dueOk;
+    // اعتبارسنجی فیلدهای تایپ (tstage/tdue)؛ نامعتبر ⇒ حذف تا پیش‌فرض «روز 0 تایپ» استفاده شود
+    const tsOk = Number.isInteger(n.tstage) && n.tstage >= 0 && n.tstage < STAGES.length;
+    const tdd = typeof n.tdue === "string" ? new Date(n.tdue + "T00:00") : null;
+    const tdOk = !!tdd && !isNaN(tdd) && fmt(tdd) === n.tdue;
+    if (!tsOk || !tdOk) { delete n.tstage; delete n.tdue; }
     const old = words.get(n.id);
-    if (!old || (old.deleted && !hasState)) {                      // لغت تازه → روز 0
+    if (!old || (old.deleted && !hasState)) {                      // لغت تازه → روز 0 (مرور و تایپ هر دو)
       await put({...old, ...n, stage: hasState ? Math.min(raw.stage, STAGES.length-1) : 0, due: hasState ? raw.due : today(),
                  updatedAt: hasState ? raw.updatedAt : Date.now(), deleted: hasState ? !!raw.deleted : false});
       added++;
-    } else if (hasState && raw.updatedAt > old.updatedAt) {        // ادغام: جدیدترین برنده است؛ ستاره/سرعتِ قدیمی حفظ می‌شود
+    } else if (hasState && raw.updatedAt > old.updatedAt) {        // ادغام: جدیدترین برنده؛ تایپ/ستاره‌ی قدیمی اگر در فایل نبود حفظ می‌شود
       await put({...old, ...n, stage: Math.min(raw.stage, STAGES.length-1), due: raw.due, updatedAt: raw.updatedAt, deleted: !!raw.deleted});
       updated++;
     } else skipped++;
@@ -539,8 +549,11 @@ async function checkTyping(){
   if (!v.trim()) return toast("چیزی ننوشتی");
   const norm = s => s.trim().toLowerCase().replace(/\s+/g, " ");
   typer.ok = norm(v) === norm(w.word); typer.typed = v;
-  await grade(w, typer.ok ? "good" : "again");                    // مثل کارت اصلی: درست=بلد بودم، غلط=بلد نبودم
-  if (!typer.ok) typer.list.push(w.id);                           // مثل «بلد نبودم» در مرور: آخر جلسه تکرار می‌شود
+  // زمان‌بندی مستقل تایپ (همان الگوی STAGES) — مرحله و تاریخ مرور کارت (stage/due) دست‌نخورده می‌ماند
+  if (typer.ok) { w.tstage = Math.min((Number.isInteger(w.tstage) ? w.tstage : 0) + 1, STAGES.length - 1); w.tdue = addDays(today(), STAGES[w.tstage]); }
+  else { w.tstage = 0; w.tdue = today(); }
+  w.updatedAt = Date.now(); await put(w);
+  if (!typer.ok) typer.list.push(w.id);                           // غلط‌ها آخر جلسه تکرار می‌شوند
   typer.state = "result"; render();
 }
 function advanceTyping(){
@@ -573,7 +586,8 @@ document.addEventListener("click", async e => {
   else if (act === "open") openWord(t.dataset.id);
   else if (act === "close") $("#modal").innerHTML = "";
   else if (act === "del") { const w = words.get(t.dataset.id); w.deleted = true; w.updatedAt = Date.now(); await put(w); $("#modal").innerHTML = ""; toast("حذف شد"); render(); }
-  else if (act === "reset") { const w = words.get(t.dataset.id); w.stage = 0; w.due = today(); w.updatedAt = Date.now(); await put(w); $("#modal").innerHTML = ""; toast("به روز 0 برگشت"); render(); }
+  else if (act === "reset") { const w = words.get(t.dataset.id); w.stage = 0; w.due = today(); w.updatedAt = Date.now(); await put(w); $("#modal").innerHTML = ""; toast("مرور به روز 0 برگشت"); render(); }
+  else if (act === "tyreset") { const w = words.get(t.dataset.id); w.tstage = 0; w.tdue = today(); w.updatedAt = Date.now(); await put(w); $("#modal").innerHTML = ""; toast("تایپ به روز 0 برگشت"); render(); }
   else if (act === "tstage") { test.stage = t.dataset.val; render(); }
   else if (act === "ttag") { test.tag = t.dataset.val; render(); }
   else if (act === "tstar") { test.star = t.dataset.val; render(); }
@@ -596,7 +610,7 @@ document.addEventListener("click", async e => {
   else if (act === "ystar") { typer.star = t.dataset.val; render(); }
   else if (act === "ystart") {
     typer.mode = $("#y-mode").value;
-    const L = filterChips(typer, "y").pool;
+    const L = filterChips(typer, "y", true).pool;
     if (!L.length) return toast("لغتی با این فیلتر نیست");
     const S = typer.mode === "shuffle" ? shuffle(L) : L.sort((a,b) => a.word.localeCompare(b.word));
     typer.list = S.map(w => w.id); typer.i = 0; typer.state = "ask"; typer.typed = ""; render();
