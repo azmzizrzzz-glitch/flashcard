@@ -103,6 +103,7 @@ button{cursor:pointer;border:0;background:none}
 .badge.due{background:var(--bad-soft);color:var(--bad)}
 input[type=search],select,textarea{width:100%;border:1px solid var(--line);background:var(--card);border-radius:12px;padding:11px 14px;min-height:46px}
 textarea{min-height:120px;direction:ltr;font-family:ui-monospace,Menlo,Consolas,monospace;font-size:.82rem}
+textarea.promptbox{direction:rtl;font-family:inherit;font-size:.85rem;line-height:1.9;min-height:260px;resize:vertical}
 label.f{display:block;font-size:.85rem;color:var(--mute);margin:10px 0 4px}
 .two{display:grid;grid-template-columns:1fr 1fr;gap:10px}
 nav{position:fixed;inset:auto 0 0 0;background:var(--card);border-top:1px solid var(--line);padding-bottom:env(safe-area-inset-bottom);z-index:5}
@@ -431,6 +432,37 @@ function viewTest(){
     <p><button class="btn" data-act="tstart">شروع تست (${F.pool.length} لغت)</button></p></div>`;
 }
 
+/* پرامپت دائمی برای ساختن لغت با هر هوش مصنوعی — در تب «تنظیمات» نمایش و کپی می‌شود */
+const AI_PROMPT = `تو از این لحظه «دستیار لغت‌نامه‌ی من» هستی و این دستور تا پایان گفتگو معتبر است؛ لازم نیست دوباره تکرارش کنی. من سطح B1 انگلیسی دارم.
+
+روش کار: من در هر پیام بعدی یا عکسِ صفحه‌ی کتاب/مقاله می‌فرستم یا چند لغت می‌نویسم یا هر دو. در برابر هر پیام من فقط یک کار داری: ساختن لغت‌ها در قالب JSON زیر و هیچ چیز دیگری — نه توضیح، نه ترجمه‌ی متنی، نه سؤال.
+
+شکل خروجی (همیشه دقیقاً همین‌طور، فقط JSON خام):
+{"words":[{"word":"...","ipa":"...","pos":"...","fa":"...","en":"...","example":"...","exampleFa":"...","related":"...","tags":"..."}]}
+
+معنی فیلدها:
+- word: خود لغت انگلیسی یا عبارت مفید، همان‌طور که در عکس یا پیام من آمده
+- ipa: تلفظ آی‌پی‌ای مثل /rɪˈzɪliənt/ — اگر مطمئن نیستی ""
+- pos: n. یا v. یا adj. یا adv. یا prep.
+- fa: معنی فارسی کوتاه و دقیق
+- en: تعریف ساده‌ی انگلیسی در یک عبارت کوتاه
+- example: یک جمله‌ی انگلیسی ساده و طبیعی با آن لغت، نزدیک به موضوع متن من
+- exampleFa: ترجمه‌ی فارسی همان جمله
+- related: حداکثر ۳ کلمه‌ی هم‌خانواده یا مترادف، با ویرگول جدا؛ نبود ""
+- tags: فقط یک برچسب موضوعی کوچک انگلیسی مثل travel یا work، از موضوع متن من
+
+قوانین:
+۱. فقط JSON خام بده؛ بدون \`\`\` و بدون هیچ متن، عنوان یا توضیحی قبل و بعدش.
+۲. فیلدهای id، stage، due، tstage، tdue، star، updatedAt را هیچ‌وقت نساز؛ برنامه‌ی من خودش می‌سازد.
+۳. فقط لغت‌هایی را که معنی‌شان را مطمئن می‌دانی بنویس؛ از خودت لغت یا معنی نساز و لغت مشکوک را حذف کن.
+۴. هر پاسخ حداکثر ۳۰ لغت؛ مهم‌ترین‌ها را انتخاب کن. اگر پیام من فقط کلمه‌ی «ادامه» بود، بقیه‌ی لغت‌های مهم همان متن قبلی را در همان قالب JSON بده.
+۵. لغتی که در همین گفتگو قبلاً داده‌ای را تکرار نکن.
+۶. اگر هم عکس فرستادم و هم لغت نوشتم، اول دقیقاً لغت‌های نوشته‌شده‌ی من را بساز، بعد لغت‌های مهم عکس را.
+۷. اگر لغت‌هایی که نوشتم فارسی بودند، رایج‌ترین معادل انگلیسی‌شان را در word بگذار و معنی فارسی خودم را در fa بنویس.
+۸. JSON استاندارد: کوتیشن دوتایی، بدون ویرگول اضافه در آخر، و فارسی را مستقیم بنویس نه با کد \\u.
+
+حالا فقط بنویس: «آماده‌ام» — و از پیام بعدی، جواب‌هایت فقط همان JSON باشد.`;
+
 /* --- تنظیمات (پیش‌فرض‌های سراسری برنامه) --- */
 function viewSettings(){
   const spd = RATES.map(([r,l]) =>
@@ -443,7 +475,11 @@ function viewSettings(){
     <p style="margin:10px 0 0"><button class="btn soft small" data-act="spktest">🔊 نمونه بشنو</button></p></div>
   <div class="panel"><h2 style="margin-top:0">🔤 اندازه‌ی فونت</h2>
     <p class="muted" style="margin-top:0">متن کل برنامه را بزرگ یا کوچک کن؛ انتخابت روی همین دستگاه ذخیره می‌ماند. ۱۰۰٪ = اندازه‌ی معمولی.</p>
-    <div class="fchips">${fsz}</div></div>`;
+    <div class="fchips">${fsz}</div></div>
+  <div class="panel"><h2 style="margin-top:0">🤖 پرامپت آماده‌ی هوش مصنوعی</h2>
+    <p class="muted" style="margin-top:0">این متن را یک بار در شروع گفتگو با هر هوش مصنوعی (ChatGPT، Claude، Gemini و…) بچسبان و بفرست. از آن به بعد در همان گفتگو هر عکس یا لغتی بفرستی، جوابش فقط یک JSON آماده می‌شود؛ آن JSON را کپی کن و در تب «داده‌ها» بچسبان تا لغت‌ها وارد شوند.</p>
+    <textarea class="promptbox" readonly>${esc(AI_PROMPT)}</textarea>
+    <p style="margin:10px 0 0"><button class="btn" data-act="copyprompt">کپی پرامپت</button></p></div>`;
 }
 
 /* --- داده‌ها --- */
@@ -594,6 +630,17 @@ document.addEventListener("click", async e => {
   else if (act === "rate") { setRate(parseFloat(t.dataset.r)); render(); }
   else if (act === "fs") { applyFs(parseFloat(t.dataset.v)); render(); }
   else if (act === "spktest") { speak("vocabulary"); }
+  else if (act === "copyprompt") {
+    try { await navigator.clipboard.writeText(AI_PROMPT); toast("پرامپت کپی شد"); }
+    catch (e) {
+      const ta = document.createElement("textarea"); ta.value = AI_PROMPT;
+      ta.style.position = "fixed"; ta.style.opacity = "0"; document.body.appendChild(ta);
+      ta.focus(); ta.select();
+      try { document.execCommand("copy"); toast("پرامپت کپی شد"); }
+      catch (e2) { toast("کپی نشد — متن را از کادر بالا دستی انتخاب و کپی کن"); }
+      ta.remove();
+    }
+  }
   else if (act === "tstart") {
     test.dir = $("#t-dir").value; test.mode = $("#t-mode").value;
     const L = filterChips(test, "t").pool;
