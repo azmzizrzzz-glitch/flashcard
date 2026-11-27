@@ -95,6 +95,12 @@ button{cursor:pointer;border:0;background:none}
 .g-easy{background:var(--acc-soft);color:var(--acc)}
 .progress{height:6px;border-radius:9px;background:var(--line);overflow:hidden;margin:6px 0}
 .progress i{display:block;height:100%;background:var(--acc);transition:width .25s}
+.dots{display:flex;flex-wrap:wrap;gap:6px;justify-content:center;margin:10px 0 2px}
+.dots i{width:14px;height:14px;border-radius:50%;border:2px solid var(--acc);display:block}
+.dots i.on{background:var(--acc)}
+.stepper{display:flex;align-items:center;justify-content:center;gap:10px;margin:6px 0}
+.stepper input{width:90px;min-height:46px;text-align:center;font-weight:700;font-size:1.15rem;border:1px solid var(--line);border-radius:12px;background:var(--card)}
+.stepper .btn.small{min-width:52px;font-size:1.4rem;padding:0;line-height:1}
 .row{display:flex;align-items:center;gap:10px;padding:12px 4px;border-bottom:1px solid var(--line);cursor:pointer}
 .row:last-child{border-bottom:0}
 .row .w{font-weight:700;direction:ltr;min-width:96px;text-align:left}
@@ -194,6 +200,22 @@ function applyFs(v){
   try { localStorage.setItem("vocab-fs", String(v)); } catch (e) {}
 }
 applyFs(fscale);
+/* جریمه‌ی غلط تایپ: چند بار پشت‌سرهم باید املای درست را تایپ کنی تا از لغت بگذری — فقط از تب «تنظیمات»؛ ۰ = خاموش */
+const PEN_MAX = 20;
+let penaltyN = 5;
+try { const v = parseInt(localStorage.getItem("vocab-penalty"), 10); if (Number.isFinite(v)) penaltyN = Math.max(0, Math.min(PEN_MAX, v)); } catch (e) {}
+function setPenalty(n){
+  const v = parseInt(n, 10); if (!Number.isFinite(v)) return;
+  penaltyN = Math.max(0, Math.min(PEN_MAX, v));
+  try { localStorage.setItem("vocab-penalty", String(penaltyN)); } catch (e) {}
+}
+/* نوع کارت هنگام واردکردن: "main" (کارت اصلی) یا "typing" (کارت تایپ) — برای دسته‌های بعدی هم می‌ماند */
+let importMode = "main";
+try { importMode = localStorage.getItem("vocab-imode") === "typing" ? "typing" : "main"; } catch (e) {}
+function setImportMode(m){
+  importMode = m === "typing" ? "typing" : "main";
+  try { localStorage.setItem("vocab-imode", importMode); } catch (e) {}
+}
 function speak(text){
   if (!("speechSynthesis" in window)) return toast("این مرورگر تلفظ را پشتیبانی نمی‌کند");
   const synth = window.speechSynthesis; synth.cancel();
@@ -235,8 +257,8 @@ function fullCardHTML(w){
 /* ---------- وضعیت صفحه ---------- */
 let tab = "today";
 let session = null;               // مرور امروز
-let test = {stage: "all", tag: "all", star: "all", dir: "en", mode: "shuffle", list: null, i: 0, shown: false};
-let typer = {stage: "all", tag: "all", star: "all", mode: "shuffle", list: null, i: 0, state: "ask", typed: "", ok: false};   // زمان‌بندی مستقل تایپ: tstage/tdue روی هر لغت
+let test = {stage: "all", tag: "all", star: "all", dir: "en", mode: "shuffle", list: null, i: 0, shown: false, state: "card", verdict: null, pen: null};   // تست: خودارزیابی + جریمه، بدون اثر روی زمان‌بندی
+let typer = {stage: "all", tag: "all", star: "all", mode: "shuffle", list: null, i: 0, state: "ask", typed: "", ok: false, pen: null};   // زمان‌بندی مستقل تایپ: tstage/tdue روی هر لغت؛ pen = جریمه‌ی جاری (فقط در همین جلسه)
 
 const TABS = [["today","📅","امروز"],["all","📚","لغت‌ها"],["type","⌨","تایپ"],["test","🎯","تست"],["data","💾","داده‌ها"],["settings","⚙️","تنظیمات"]];
 function renderNav(){
@@ -249,8 +271,10 @@ function render(){
   $("#view").innerHTML = ({today: viewToday, all: viewAll, type: viewType, test: viewTest, data: viewData, settings: viewSettings})[tab]();
   if (tab === "all") renderList();
   if (tab === "data") renderPersist();
-  if (tab === "type" && typer.list && typer.state === "ask") {
-    const el = $("#ans"); if (el) { el.value = typer.typed; setTimeout(() => el.focus(), 30); }
+  const focusAns = (tab === "type" && typer.list && (typer.state === "ask" || typer.state === "penalty"))
+               || (tab === "test" && test.list && !!test.pen && test.pen.done < test.pen.need);
+  if (focusAns) {
+    const el = $("#ans"); if (el) { el.value = (tab === "type" && typer.state === "ask") ? typer.typed : ""; setTimeout(() => el.focus(), 30); }
   }
   window.scrollTo(0, 0);
 }
@@ -366,14 +390,21 @@ function viewType(){
         <button class="btn" data-act="tycheck">بررسی</button>
         <div class="hint">Enter = بررسی</div></div>
       <p style="text-align:center"><button class="btn ghost small" data-act="tyend">خروج از تایپ</button></p>`;
+    if (typer.state === "penalty" && typer.pen) return `<div class="muted" style="display:flex;justify-content:space-between"><span>${typer.i+1} از ${typer.list.length}</span><span>جریمه‌ی غلط</span></div>
+      <div class="progress"><i style="width:${Math.round(100*(typer.i+1)/typer.list.length)}%"></i></div>
+      ${penPanelHTML(typer.typed, w, typer.pen)}
+      ${penCardHTML(w, typer.pen, "typen")}
+      <p style="text-align:center"><button class="btn ghost small" data-act="tyend">خروج از تایپ</button></p>`;
     const moved = typer.ok
       ? `تایپ: یک مرحله جلوتر (${stageLabel(w.tstage)}) · تمرین بعدی ${whenText(daysBetween(today(), w.tdue))}`
       : `تایپ برگشت به ${stageLabel(w.tstage)} · همین امروز دوباره (مرور کارت دست‌نخورده)`;
+    const penDone = typer.pen && typer.pen.done >= typer.pen.need ? `<p class="muted" style="margin:4px 0;color:var(--acc)">✓ جریمه‌ی ${typer.pen.need} باری کامل شد</p>` : "";
     return `<div class="muted" style="display:flex;justify-content:space-between"><span>${typer.i+1} از ${typer.list.length}</span><span>نتیجه</span></div>
       <div class="progress"><i style="width:${Math.round(100*(typer.i+1)/typer.list.length)}%"></i></div>
       <div class="panel ${typer.ok ? "res-good" : "res-bad"}" style="text-align:center">
         <div class="resline">${typer.ok ? "درست بود" : "غلط بود"}</div>
-        ${typer.ok ? "" : diffBlock(typer.typed, w.word)}
+        ${typer.ok ? "" : (typer.pen ? "" : diffBlock(typer.typed, w.word))}
+        ${penDone}
         <p class="muted" style="margin:4px 0">${moved}</p></div>
       <div class="card" data-nofocus>${starBtn(w)}
         <div class="word">${esc(w.word)}</div>
@@ -383,7 +414,7 @@ function viewType(){
       <p style="text-align:center"><button class="btn ghost small" data-act="tyend">خروج از تایپ</button></p>`;
   }
   const F = filterChips(typer, "y", true);
-  return `<div class="panel"><p class="muted" style="margin-top:0">معنی فارسی را می‌بینی و انگلیسی‌اش را تایپ می‌کنی. تایپ زمان‌بندی مستقل خودش را دارد (با همان الگوی روزها): درست = یک مرحله جلوتر؛ غلط = برگشت به روز 0 فقط در تایپ — مرور کارت اصلی عقب نمی‌رود. غلط‌ها آخر جلسه تکرار می‌شوند.</p>
+  return `<div class="panel"><p class="muted" style="margin-top:0">معنی فارسی را می‌بینی و انگلیسی‌اش را تایپ می‌کنی. تایپ زمان‌بندی مستقل خودش را دارد (با همان الگوی روزها): درست = یک مرحله جلوتر؛ غلط = برگشت به روز 0 فقط در تایپ — مرور کارت اصلی عقب نمی‌رود. غلط‌ها آخر جلسه تکرار می‌شوند.${penaltyN > 0 ? ` با هر غلط جریمه هم داری: املای درست را ${penaltyN} بار پشت‌سرهم تایپ می‌کنی تا لغت بعدی بیاید (از تنظیمات قابل تغییر).` : ""}</p>
     <label class="f">کدام لغت‌ها؟ (بر اساس مرحله‌ی تایپ)</label>
     <div class="fchips">${F.stageChips}</div>
     <label class="f">ستاره‌ها</label>
@@ -414,19 +445,76 @@ function diffBlock(typed, target){
     <div class="difflabel">املای درست:</div><div class="diffrow">${render(G)}</div></div>`;
 }
 
+/* --- جریمه‌ی تایپ (مشترک بین تب تایپ و تب تست): املای درست را N بار پشت‌سرهم بنویس --- */
+const normAns = s => String(s ?? "").trim().toLowerCase().replace(/\s+/g, " ");
+const dotsHTML = P => `<div class="dots" role="img" aria-label="${P.done} از ${P.need} تایپ درست">${Array.from({length: P.need}, (_, k) => `<i class="${k < P.done ? "on" : ""}"></i>`).join("")}</div>`;
+// پیام «غلط بود» + تصحیح آخرین غلط + دستور جریمه. typed = غلط اول؛ P.last = غلط وسط جریمه (اگر باشد جایگزین تصحیح می‌شود)
+const penPanelHTML = (typed, w, P) => `<div class="panel res-bad" style="text-align:center">
+    <div class="resline">غلط بود</div>
+    ${(P.last || typed) ? diffBlock(P.last || typed, w.word) : ""}
+    <p style="margin:8px 0 0"><b>جریمه:</b> املای درست را <b>${P.need}</b> بار پشت‌سرهم تایپ کن تا از این لغت بگذری.</p>
+    ${dotsHTML(P)}
+    ${P.last ? `<p class="muted" style="color:var(--bad)">این بار غلط بود — شمارنده از صفر شروع شد. تصحیح را بالا ببین و دوباره بنویس.</p>` : ""}</div>`;
+// کارت جریمه: املای درست بالای کادر دیده می‌شود و کاربر آن را تایپ می‌کند
+const penCardHTML = (w, P, act) => `<div class="card" data-nofocus>${starBtn(w)}
+    <div class="word" data-act="speak" data-text="${esc(w.word)}" data-id="${esc(w.id)}">${esc(w.word)}</div>
+    <div class="ipa">${esc(w.ipa)}${w.pos ? " · " + esc(w.pos) : ""}</div>${speakBar(w)}<hr>${detailsHTML(w)}
+    <input type="text" id="ans" dir="ltr" autocomplete="off" autocapitalize="off" autocorrect="off" spellcheck="false" placeholder="املای درست را بنویس…" aria-label="تایپ جریمه">
+    <button class="btn" data-act="${act}">ثبت (${P.done} از ${P.need})</button>
+    <div class="hint">Enter = ثبت</div></div>`;
+// یک تایپ در جریمه را می‌سنجد: درست = یکی به شمارنده؛ غلط = صفر شدن شمارنده + نگه‌داشتن متن برای تصحیح (اثر دیگری ندارد)
+function checkPen(P, w){
+  const v = $("#ans") ? $("#ans").value : "";
+  if (!v.trim()) { toast("چیزی ننوشتی"); return false; }
+  if (normAns(v) === normAns(w.word)) { P.done++; P.last = ""; }
+  else { P.done = 0; P.last = v; }
+  return true;
+}
+function submitTyping(){
+  if (typer.state === "penalty" && typer.pen) {
+    if (!checkPen(typer.pen, words.get(typer.list[typer.i]))) return;
+    if (typer.pen.done >= typer.pen.need) typer.state = "result";
+    render();
+  } else checkTyping();
+}
+function submitTest(){
+  if (!test.pen) return;
+  if (!checkPen(test.pen, words.get(test.list[test.i]))) return;
+  if (test.pen.done >= test.pen.need) test.state = "result";
+  render();
+}
+function testStep(d){
+  test.i = (test.i + d + test.list.length) % test.list.length;
+  test.shown = false; test.state = "card"; test.verdict = null; test.pen = null; render();
+}
+
 /* --- تست (بدون تأثیر روی زمان‌بندی) --- */
 function viewTest(){
   if (!live().length) return `<div class="empty"><div class="big">🎯</div><p>اول لغت وارد کن.</p></div>`;
   if (test.list) {
     const w = words.get(test.list[test.i]);
-    return `<div class="muted" style="display:flex;justify-content:space-between"><span>${test.i+1} از ${test.list.length}</span><span>حالت تست · مرور و تایپ را تغییر نمی‌دهد</span></div>
-      <div class="progress"><i style="width:${Math.round(100*(test.i+1)/test.list.length)}%"></i></div>
-      <div class="card" data-act="tflip">${starBtn(w)}${frontHTML(w,test.dir)}${test.shown ? `<hr>${backHTML(w,test.dir)}` : `<div class="hint">برای دیدن پشت کارت بزن</div>`}</div>
-      <div class="two"><button class="btn ghost" data-act="tprev">قبلی</button><button class="btn" data-act="tnext">بعدی</button></div>
-      <p style="text-align:center"><button class="btn ghost small" data-act="tend">خروج از تست</button></p>`;
+    const head = `<div class="muted" style="display:flex;justify-content:space-between"><span>${test.i+1} از ${test.list.length}</span><span>حالت تست · مرور و تایپ را تغییر نمی‌دهد</span></div>
+      <div class="progress"><i style="width:${Math.round(100*(test.i+1)/test.list.length)}%"></i></div>`;
+    const foot = `<p style="text-align:center"><button class="btn ghost small" data-act="tend">خروج از تست</button></p>`;
+    if (test.pen && test.pen.done < test.pen.need)                      // جریمه‌ی «بلد نبودم»: املای درست N بار
+      return head + penPanelHTML("", w, test.pen) + penCardHTML(w, test.pen, "tpen") + foot;
+    if (test.state === "result") {                                       // نتیجه‌ی خودارزیابی: «درست بود» / «غلط بود»
+      const ok = test.verdict === "ok";
+      const done = test.pen && test.pen.done >= test.pen.need;
+      return head + `<div class="panel ${ok ? "res-good" : "res-bad"}" style="text-align:center">
+          <div class="resline">${ok ? "درست بود" : "غلط بود"}</div>
+          ${done ? `<p class="muted" style="margin:4px 0;color:var(--acc)">✓ جریمه‌ی ${test.pen.need} باری کامل شد</p>` : ""}</div>
+        <div class="card" data-nofocus>${starBtn(w)}${frontHTML(w,test.dir)}<hr>${backHTML(w,test.dir)}</div>
+        <div class="two"><button class="btn ghost" data-act="tprev">قبلی</button><button class="btn" data-act="tnext">بعدی</button></div>` + foot;
+    }
+    return head + `<div class="card" data-act="tflip">${starBtn(w)}${frontHTML(w,test.dir)}${test.shown ? `<hr>${backHTML(w,test.dir)}` : `<div class="hint">برای دیدن پشت کارت بزن</div>`}</div>
+      ${test.shown ? `<div class="grades" style="grid-template-columns:1fr 1fr">
+          <button class="g-again" data-act="tmark" data-v="bad">بلد نبودم<small>${penaltyN > 0 ? `جریمه: ${penaltyN} بار تایپ` : "فقط ثبت نتیجه"}</small></button>
+          <button class="g-good" data-act="tmark" data-v="ok">بلد بودم<small>درست</small></button></div>` : ""}
+      <div class="two"><button class="btn ghost" data-act="tprev">قبلی</button><button class="btn" data-act="tnext">بعدی</button></div>` + foot;
   }
   const F = filterChips(test, "t");
-  return `<div class="panel"><p class="muted" style="margin-top:0">اینجا می‌توانی هر لغتی را هر چند بار که خواستی مرور کنی، بدون این‌که زمان‌بندی تغییر کند.</p>
+  return `<div class="panel"><p class="muted" style="margin-top:0">اینجا می‌توانی هر لغتی را هر چند بار که خواستی مرور کنی، بدون این‌که زمان‌بندی تغییر کند. بعد از ورق‌زدن، خودت را ارزیابی کن: با «بلد بودم» نتیجه «درست بود» و با «بلد نبودم» نتیجه «غلط بود» نشان داده می‌شود${penaltyN > 0 ? ` و جریمه‌ی تایپ (${penaltyN} بار نوشتن املای درست) فعال می‌شود` : ""}.</p>
     <label class="f">کدام لغت‌ها؟ (بر اساس مرحله)</label>
     <div class="fchips">${F.stageChips}</div>
     <label class="f">ستاره‌ها</label>
@@ -482,6 +570,10 @@ function viewSettings(){
   <div class="panel"><h2 style="margin-top:0">🔤 اندازه‌ی فونت</h2>
     <p class="muted" style="margin-top:0">متن کل برنامه را بزرگ یا کوچک کن؛ انتخابت روی همین دستگاه ذخیره می‌ماند. ۱۰۰٪ = اندازه‌ی معمولی.</p>
     <div class="fchips">${fsz}</div></div>
+  <div class="panel"><h2 style="margin-top:0">✍️ جریمه‌ی غلط تایپ</h2>
+    <p class="muted" style="margin-top:0">هر بار در تب «تایپ» یا «تست» املای لغتی را غلط بزنی، تا از آن لغت بگذری باید املای درستش را به تعداد همین عدد پشت‌سرهم تایپ کنی (املای درست را می‌بینی و کپی می‌کنی). یک غلط وسط کار، شمارنده را صفر می‌کند. صفر = جریمه خاموش.</p>
+    <div class="stepper"><button class="btn ghost small" data-act="pen" data-d="-1" aria-label="کمتر">−</button><input type="number" id="pen" min="0" max="${PEN_MAX}" step="1" value="${penaltyN}" inputmode="numeric" aria-label="تعداد تایپ جریمه"><button class="btn ghost small" data-act="pen" data-d="1" aria-label="بیشتر">+</button></div>
+    <p class="muted" style="text-align:center;margin:6px 0 0">${penaltyN === 0 ? "جریمه خاموش است" : `${penaltyN} بار تایپ درست پشت‌سرهم`}</p></div>
   <div class="panel"><h2 style="margin-top:0">🤖 پرامپت آماده‌ی هوش مصنوعی</h2>
     <p class="muted" style="margin-top:0">این متن را یک بار در شروع گفتگو با هر هوش مصنوعی (ChatGPT، Claude، Gemini و…) بچسبان و بفرست. از آن به بعد در همان گفتگو هر عکس یا لغتی بفرستی، جوابش فقط یک JSON آماده می‌شود؛ آن JSON را کپی کن و در تب «داده‌ها» بچسبان تا لغت‌ها وارد شوند.</p>
     <textarea class="promptbox" readonly>${esc(AI_PROMPT)}</textarea>
@@ -497,6 +589,11 @@ function viewData(){
     <label class="f">یا متن JSON را این‌جا بچسبان</label>
     <textarea id="paste" placeholder='{"words":[{"word":"resilient","fa":"تاب‌آور"}]}'></textarea>
     <p><button class="btn ghost" data-act="importpaste">وارد کردن متن</button></p>
+    <label class="f">این لغت‌ها را به‌صورت چه کارتی وارد کنم؟</label>
+    <div class="fchips">
+      <button class="fchip${importMode==="main"?" on":""}" data-act="imode" data-val="main">کارت اصلی<small>مرور + تایپ</small></button>
+      <button class="fchip${importMode==="typing"?" on":""}" data-act="imode" data-val="typing">⌨ کارت تایپ<small>فقط تایپ</small></button></div>
+    <p class="muted" style="margin-top:0">«کارت اصلی» در مرور اصلی و تایپ هر دو می‌آید؛ «کارت تایپ» فقط در بخش تایپ تمرین می‌شود و از مرور اصلی و تست بیرون می‌ماند (بعداً از صفحه‌ی خود لغت هم عوض‌شدنی است). لغتی که در خود فایل صریحاً «فقط تایپ» نوشته شده باشد، در حالت «کارت اصلی» هم تایپ می‌ماند.</p>
     <details><summary>فرمت فایل چیست؟</summary>
 <pre>{"words":[{
   "word": "resilient",
@@ -563,6 +660,7 @@ async function importText(text){
   let added = 0, updated = 0, skipped = 0;
   for (const raw of list) {
     const n = normalize(raw); if (!n) { skipped++; continue; }
+    if (importMode === "typing") n.typingOnly = true;   // «کارت تایپ»: همه‌ی لغت‌های این دسته فقط در بخش تایپ می‌آیند
     const dd = raw.due ? new Date(raw.due + "T00:00") : null;
     const dueOk = !!dd && /^\d{4}-\d\d-\d\d$/.test(raw.due) && !isNaN(dd) && fmt(dd) === raw.due;
     const hasState = Number.isFinite(raw.updatedAt) && Number.isInteger(raw.stage)
@@ -582,7 +680,7 @@ async function importText(text){
       updated++;
     } else skipped++;
   }
-  toast(`${added} لغت جدید · ${updated} به‌روز · ${skipped} ردشده`);
+  toast(`${added} لغت جدید · ${updated} به‌روز · ${skipped} ردشده${importMode === "typing" ? " · به‌صورت کارت تایپ" : ""}`);
   session = null; render();
 }
 async function saveFile(name, text, mime){
@@ -616,10 +714,13 @@ async function checkTyping(){
   else { w.tstage = 0; w.tdue = today(); }
   w.updatedAt = Date.now(); await put(w);
   if (!typer.ok) typer.list.push(w.id);                           // غلط‌ها آخر جلسه تکرار می‌شوند
-  typer.state = "result"; render();
+  typer.pen = null;
+  if (!typer.ok && penaltyN > 0) { typer.pen = {need: penaltyN, done: 0, last: ""}; typer.state = "penalty"; }   // جریمه‌ی اجباری
+  else typer.state = "result";
+  render();
 }
 function advanceTyping(){
-  typer.i++; typer.state = "ask"; typer.typed = "";
+  typer.i++; typer.state = "ask"; typer.typed = ""; typer.pen = null;
   if (typer.i >= typer.list.length) { typer.list = null; toast("تایپ تمام شد"); }
   render();
 }
@@ -678,12 +779,21 @@ document.addEventListener("click", async e => {
     const L = filterChips(test, "t").pool;
     if (!L.length) return toast("لغتی با این فیلتر نیست");
     const S = test.mode === "shuffle" ? shuffle(L) : L.sort((a,b) => a.word.localeCompare(b.word));
-    test.list = S.map(w => w.id); test.i = 0; test.shown = false; render();
+    test.list = S.map(w => w.id); test.i = 0; test.shown = false; test.state = "card"; test.verdict = null; test.pen = null; render();
   }
   else if (act === "tflip") { test.shown = !test.shown; render(); }
-  else if (act === "tnext") { test.i = (test.i + 1) % test.list.length; test.shown = false; render(); }
-  else if (act === "tprev") { test.i = (test.i - 1 + test.list.length) % test.list.length; test.shown = false; render(); }
-  else if (act === "tend") { test.list = null; render(); }
+  else if (act === "tmark") {                                   // خودارزیابی: نتیجه گفته می‌شود؛ «بلد نبودم» = جریمه‌ی تایپ
+    const bad = t.dataset.v === "bad";
+    test.verdict = bad ? "bad" : "ok"; test.shown = true; test.state = "result";
+    test.pen = bad && penaltyN > 0 ? {need: penaltyN, done: 0, last: ""} : null;
+    render();
+  }
+  else if (act === "tpen") { submitTest(); }
+  else if (act === "tnext") { testStep(1); }
+  else if (act === "tprev") { testStep(-1); }
+  else if (act === "tend") { test.list = null; test.state = "card"; test.verdict = null; test.pen = null; render(); }
+  else if (act === "imode") { setImportMode(t.dataset.val); render(); }
+  else if (act === "pen") { setPenalty(penaltyN + Number(t.dataset.d)); render(); }
   else if (act === "ystage") { typer.stage = t.dataset.val; render(); }
   else if (act === "ytag") { typer.tag = t.dataset.val; render(); }
   else if (act === "ystar") { typer.star = t.dataset.val; render(); }
@@ -692,11 +802,12 @@ document.addEventListener("click", async e => {
     const L = filterChips(typer, "y", true).pool;
     if (!L.length) return toast("لغتی با این فیلتر نیست");
     const S = typer.mode === "shuffle" ? shuffle(L) : L.sort((a,b) => a.word.localeCompare(b.word));
-    typer.list = S.map(w => w.id); typer.i = 0; typer.state = "ask"; typer.typed = ""; render();
+    typer.list = S.map(w => w.id); typer.i = 0; typer.state = "ask"; typer.typed = ""; typer.pen = null; render();
   }
-  else if (act === "tycheck") { await checkTyping(); }
+  else if (act === "tycheck") { submitTyping(); }
+  else if (act === "typen") { submitTyping(); }
   else if (act === "tynext") { advanceTyping(); }
-  else if (act === "tyend") { typer.list = null; render(); }
+  else if (act === "tyend") { typer.list = null; typer.pen = null; render(); }
   else if (act === "pickfile") $("#file").click();
   else if (act === "importpaste") { const v = $("#paste").value.trim(); if (v) await importText(v); else toast("چیزی نچسبانده‌ای"); }
   else if (act === "exportjson") { await saveFile(`vocab-backup-${today()}.json`, JSON.stringify({app: "vocab", version: 1, exported: new Date().toISOString(), words: [...words.values()]}, null, 1), "text/plain"); }
@@ -704,11 +815,16 @@ document.addEventListener("click", async e => {
 });
 document.addEventListener("input", e => {
   if (e.target.id === "q") renderList();
-  if (e.target.id === "ans") typer.typed = e.target.value;         // متن تایپی وسط کار نیمه‌کاره از دست نرود
+  if (e.target.id === "ans" && tab === "type" && typer.state === "ask") typer.typed = e.target.value;   // متن تایپی وسط کار نیمه‌کاره از دست نرود
+});
+document.addEventListener("change", e => {
+  if (e.target.id === "pen") { setPenalty(e.target.value); render(); }   // عدد جریمه‌ی تایپ‌شده در کادر
 });
 document.addEventListener("keydown", e => {
   if (e.key !== "Enter") return;
-  if (e.target && e.target.id === "ans") { e.preventDefault(); checkTyping(); }
+  if (e.target && e.target.id === "ans") { e.preventDefault(); if (tab === "test") submitTest(); else submitTyping(); }
+  else if (tab === "test" && test.list && test.state === "result"
+      && !(e.target.closest && e.target.closest("button,input,select,textarea,a"))) { e.preventDefault(); testStep(1); }
   else if (tab === "type" && typer.list && typer.state === "result"
       && !(e.target.closest && e.target.closest("button,input,select,textarea,a"))) { e.preventDefault(); advanceTyping(); }
 });
