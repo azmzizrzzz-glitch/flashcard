@@ -615,7 +615,7 @@ document.addEventListener("click", async e => {
   else if (act === "star") {
     e.stopPropagation();
     const w = words.get(t.dataset.id); w.star = !w.star; w.updatedAt = Date.now(); await put(w);
-    if (tab === "all") { if ("#modal" && $("#modal").innerHTML) openWord(w.id); renderList(); } else render();
+    if (tab === "all") { if ($("#modal").innerHTML) openWord(w.id); renderList(); } else render();
   }
   else if (act === "start") { const q = dueList().map(w => w.id); session = {queue: q, total: q.length, done: 0, revealed: false}; render(); }
   else if (act === "flip") { session.revealed = true; render(); }
