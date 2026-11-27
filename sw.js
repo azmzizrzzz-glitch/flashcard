@@ -1,6 +1,6 @@
 // سرویس‌ورکر: بعد از اولین بازکردن، برنامه بدون اینترنت هم کار می‌کند.
 // برای انتشار نسخه‌ی جدید، فقط همین عدد نسخه را عوض کن (مثلاً vocab-v3).
-const V = "vocab-v6";
+const V = "vocab-v7";
 const FILES = ["./", "index.html", "manifest.json", "icon.svg", "icon-192.png", "icon-512.png"];
 
 self.addEventListener("install", e => {
