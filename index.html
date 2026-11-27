@@ -545,7 +545,7 @@ function normalize(x){
 function parseLoose(text){
   const t = String(text || "").trim();
   try { return JSON.parse(t); } catch {}
-  let s = t; const f = s.indexOf("```\n");
+  let s = t; const f = s.indexOf("```");
   if (f >= 0) { s = s.slice(f + 3).replace(/^[a-z]*\s*/i, ""); const e = s.indexOf("```"); if (e >= 0) s = s.slice(0, e); s = s.trim(); }
   const a = s.indexOf("{"), b = s.indexOf("[");
   const start = a < 0 ? b : (b < 0 ? a : Math.min(a, b));
